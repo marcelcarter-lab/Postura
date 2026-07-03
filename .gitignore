@@ -1,0 +1,45 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Flask / instance config ---
+instance/
+.env
+*.env
+!.env.example
+
+# --- Database ---
+*.sqlite3
+*.db
+pgdata/
+
+# --- Docker ---
+*.log
+docker-compose.override.yml
+
+# --- Alembic (keep migrations, ignore local db state) ---
+# (migrations folder itself should be tracked, not ignored)
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Reports (generated PDFs, don't version) ---
+/reports/*.pdf
