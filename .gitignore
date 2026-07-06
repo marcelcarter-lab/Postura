@@ -28,9 +28,6 @@ pgdata/
 *.log
 docker-compose.override.yml
 
-# --- Alembic (keep migrations, ignore local db state) ---
-# (migrations folder itself should be tracked, not ignored)
-
 # --- IDE / editor ---
 .vscode/
 .idea/
