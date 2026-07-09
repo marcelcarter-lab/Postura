@@ -17,7 +17,12 @@ def create_app(config_class=Config):
         from app import models  # noqa: F401 — ensures models are registered
 
     from app.routes.auth import auth_bp
-
     app.register_blueprint(auth_bp, url_prefix="/auth")
+
+    from app.routes.main import main_bp
+    app.register_blueprint(main_bp)
+
+    from app.routes.scan import scan_bp
+    app.register_blueprint(scan_bp)
 
     return app
