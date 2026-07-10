@@ -11,23 +11,34 @@ from app.services.checks.permissions_policy_check import PermissionsPolicyCheck
 from app.services.checks.ssl_cert_check import SSLCertCheck
 from app.services.checks.tls_version_check import TLSVersionCheck
 from app.services.checks.cipher_check import CipherStrengthCheck
+from app.services.checks.exposure_check import ExposureCheck
+from app.services.checks.directory_listing_check import DirectoryListingCheck
+from app.services.checks.server_header_check import ServerHeaderCheck
+from app.services.checks.x_powered_by_check import XPoweredByCheck
+from app.services.checks.meta_generator_check import MetaGeneratorCheck
+from app.services.checks.cms_fingerprint_check import CMSFingerprintCheck
 
 logger = logging.getLogger(__name__)
 
-# The full set of checks a scan runs. Each entry is a BaseCheck
-# subclass; the orchestrator instantiates each with the target URL and
-# runs them in this order. Order matters only for readability/logging
-# here — checks are independent of each other's results.
 ENABLED_CHECKS = [
+    # Sprint 1: HTTP security headers
     CSPCheck,
     HSTSCheck,
     XFrameOptionsCheck,
     XContentTypeOptionsCheck,
     ReferrerPolicyCheck,
     PermissionsPolicyCheck,
+    # Sprint 1: SSL/TLS
     SSLCertCheck,
     TLSVersionCheck,
     CipherStrengthCheck,
+    # Sprint 2: exposure detection + fingerprinting
+    ExposureCheck,
+    DirectoryListingCheck,
+    ServerHeaderCheck,
+    XPoweredByCheck,
+    MetaGeneratorCheck,
+    CMSFingerprintCheck,
 ]
 
 

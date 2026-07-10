@@ -5,26 +5,28 @@ from urllib.parse import urlparse
 
 from app.services.checks.base import BaseCheck, CheckResult
 from app.services.checks.schema import Severity
-from app.services.checks.tls_utils import open_tls_connection
+from app.services.checks.tls_utils import (
+    DEFAULT_PORT,
+    open_tls_connection,
+    open_tls_connection_insecure,
+)
 
 EXPIRY_WARNING_DAYS = 30
-
-# Certificate dates from the ssl module are returned in this format,
-# e.g. "Jan 15 12:00:00 2027 GMT"
 CERT_DATE_FORMAT = "%b %d %H:%M:%S %Y %Z"
 
 
 class SSLCertCheck(BaseCheck):
-    """Checks the target's TLS certificate validity: whether it has
-    expired, is expiring soon, and basic issuer information. Operates
-    at the TLS layer directly via tls_utils.open_tls_connection, not
-    via the HTTP fetch wrapper used by header checks.
+    """Checks the target's TLS certificate validity: expiration, trust
+    status, and issuer. Attempts a strict handshake first; if that
+    fails trust validation, retries with validation disabled so the
+    certificate can still be inspected and the specific problem
+    (expired vs. untrusted vs. other) reported as a distinct finding.
     """
 
     check_type = "ssl_cert_validity"
 
     def run(self) -> CheckResult:
-        hostname = self._extract_hostname(self.target_url)
+        hostname, port = self._extract_host_port(self.target_url)
 
         if not hostname:
             return CheckResult(
@@ -37,17 +39,58 @@ class SSLCertCheck(BaseCheck):
                 passed=False,
             )
 
+        trusted = True
+        trust_error = None
+        cert = None
+
         try:
-            with open_tls_connection(hostname) as ssock:
+            with open_tls_connection(hostname, port=port) as ssock:
                 cert = ssock.getpeercert()
-        except (ssl.SSLError, socket.error, socket.timeout, ConnectionError) as exc:
+        except ssl.SSLError as exc:
+            trusted = False
+            trust_error = str(exc)
+            try:
+                with open_tls_connection_insecure(hostname, port=port) as ssock:
+                    cert = ssock.getpeercert()
+            except (ssl.SSLError, socket.error, socket.timeout, ConnectionError) as exc2:
+                return CheckResult(
+                    check_type=self.check_type,
+                    severity=Severity.INFO,
+                    title="Could not evaluate SSL certificate",
+                    description=(
+                        "Could not complete a TLS handshake with the target, "
+                        "even with certificate validation disabled."
+                    ),
+                    evidence=f"error={exc2}",
+                    recommendation="Ensure the target supports HTTPS and retry.",
+                    passed=False,
+                )
+        except (socket.error, socket.timeout, ConnectionError) as exc:
             return CheckResult(
                 check_type=self.check_type,
                 severity=Severity.INFO,
                 title="Could not evaluate SSL certificate",
                 description="Could not complete a TLS handshake with the target.",
                 evidence=f"error={exc}",
-                recommendation="Ensure the target supports HTTPS on port 443 and retry.",
+                recommendation="Ensure the target supports HTTPS on the expected port and retry.",
+                passed=False,
+            )
+
+        if not cert:
+            return CheckResult(
+                check_type=self.check_type,
+                severity=Severity.HIGH,
+                title="SSL certificate is not trusted",
+                description=(
+                    "The TLS handshake failed certificate validation "
+                    f"({trust_error}), and no certificate details could be "
+                    "retrieved even with validation disabled."
+                ),
+                evidence=f"trust_error={trust_error}",
+                recommendation=(
+                    "Replace the certificate with one issued by a trusted "
+                    "CA, or fix the reported validation error."
+                ),
                 passed=False,
             )
 
@@ -68,12 +111,15 @@ class SSLCertCheck(BaseCheck):
 
         now = datetime.now(timezone.utc)
         days_remaining = (not_after - now).days
-
+        trust_note = "trusted" if trusted else f"NOT TRUSTED ({trust_error})"
         evidence = (
             f"issuer={issuer} | notBefore={not_before} | notAfter={not_after} | "
-            f"days_remaining={days_remaining}"
+            f"days_remaining={days_remaining} | trust={trust_note}"
         )
 
+        # Expiration takes priority over trust status — an expired AND
+        # untrusted cert should be reported as "expired" first, since
+        # that's the more specific, more urgent problem.
         if days_remaining < 0:
             return CheckResult(
                 check_type=self.check_type,
@@ -86,6 +132,24 @@ class SSLCertCheck(BaseCheck):
                 ),
                 evidence=evidence,
                 recommendation="Renew the SSL certificate immediately.",
+                passed=False,
+            )
+
+        if not trusted:
+            return CheckResult(
+                check_type=self.check_type,
+                severity=Severity.HIGH,
+                title="SSL certificate is not trusted",
+                description=(
+                    "The certificate has a valid date range but failed "
+                    f"trust validation: {trust_error}. Browsers will show "
+                    "security warnings to visitors."
+                ),
+                evidence=evidence,
+                recommendation=(
+                    "Replace with a certificate issued by a trusted CA, or "
+                    "fix the hostname/chain configuration."
+                ),
                 passed=False,
             )
 
@@ -114,9 +178,9 @@ class SSLCertCheck(BaseCheck):
         )
 
     @staticmethod
-    def _extract_hostname(target_url: str):
+    def _extract_host_port(target_url: str):
         parsed = urlparse(target_url)
-        return parsed.hostname
+        return parsed.hostname, (parsed.port or DEFAULT_PORT)
 
     @staticmethod
     def _parse_cert_date(date_str):
@@ -129,9 +193,6 @@ class SSLCertCheck(BaseCheck):
 
     @staticmethod
     def _format_name(name_tuples):
-        """Certificate issuer/subject fields come as a nested tuple
-        structure like ((('countryName', 'US'),), (('organizationName',
-        'Example CA'),), ...). Flattens to a readable string."""
         if not name_tuples:
             return "unknown"
         parts = []
