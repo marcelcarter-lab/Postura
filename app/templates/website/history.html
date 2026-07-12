@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Scan History - Postura{% endblock %}
+
+{% block content %}
+
+<h2 class="my-4">Scan History — {{ website.display_name }}</h2>
+<p class="text-muted">{{ website.url }}</p>
+
+{% if scan_rows %}
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in scan_rows %}
+        <tr>
+            <td>{{ row.scan.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                <span class="badge bg-secondary text-capitalize">{{ row.scan.status }}</span>
+            </td>
+            <td>
+                {% if row.score is not none %}
+                    <span class="badge bg-{{ row.score_color }}">{{ row.score }} / 100</span>
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if row.scan.status == "completed" %}
+                    <a href="{{ url_for('scan_view.scan_detail', scan_id=row.scan.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">No scans yet for this website.</p>
+{% endif %}
+{% endblock %}

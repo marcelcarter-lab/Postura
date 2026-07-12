@@ -25,4 +25,10 @@ def create_app(config_class=Config):
     from app.routes.scan import scan_bp
     app.register_blueprint(scan_bp)
 
+    from app.routes.website import website_bp
+    app.register_blueprint(website_bp)
+
+    from app.routes.scan_view import scan_view_bp
+    app.register_blueprint(scan_view_bp)
+
     return app

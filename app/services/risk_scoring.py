@@ -68,3 +68,20 @@ def _normalize_severity(severity) -> Severity:
     if isinstance(severity, Severity):
         return severity
     return Severity(severity)
+
+SCORE_COLOR_THRESHOLDS = {
+    "danger": (0, 49),
+    "warning": (50, 79),
+    "success": (80, 100),
+}
+
+
+def score_to_color(score: int) -> str:
+    """Maps a 0-100 risk score to a Bootstrap color class name
+    (danger/warning/success), used for badge color-coding in the
+    dashboard. Thresholds are a judgment call — see Sprint 3's "Add
+    score color-coding to dashboard" task notes for reasoning."""
+    for color, (low, high) in SCORE_COLOR_THRESHOLDS.items():
+        if low <= score <= high:
+            return color
+    return "secondary"  # fallback, should be unreachable for valid 0-100 scores

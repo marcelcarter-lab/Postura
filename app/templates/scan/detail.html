@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Results - Postura{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center my-4">
+    <div>
+        <h2>{{ website.display_name }}</h2>
+        <p class="text-muted mb-0">{{ website.url }}</p>
+        <p class="text-muted">Scanned {{ scan.started_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    </div>
+    <span class="badge bg-{{ score_color }} fs-4">{{ score }} / 100</span>
+</div>
+
+{% for severity in severity_order %}
+    {% set findings = findings_by_severity[severity] %}
+    {% if findings %}
+    <div class="mb-4">
+        <h4 class="text-capitalize">{{ severity.value }} ({{ findings|length }})</h4>
+        {% for finding in findings %}
+        <div class="card mb-2">
+            <div class="card-body">
+                <h6 class="card-title">
+                    {{ finding.title }}
+                    {% if finding.passed %}
+                        <span class="badge bg-success">Passed</span>
+                    {% endif %}
+                </h6>
+                <p class="card-text">{{ finding.description }}</p>
+                {% if finding.recommendation %}
+                <p class="card-text"><strong>Recommendation:</strong> {{ finding.recommendation }}</p>
+                {% endif %}
+                {% if finding.evidence %}
+                <button class="btn btn-sm btn-outline-secondary" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#evidence-{{ finding.id }}"
+                        aria-expanded="false" aria-controls="evidence-{{ finding.id }}">
+                    Show evidence
+                </button>
+                <div class="collapse mt-2" id="evidence-{{ finding.id }}">
+                    <pre class="bg-dark text-light p-2 rounded small">{{ finding.evidence }}</pre>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endfor %}
+{% endblock %}

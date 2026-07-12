@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Add Website - Postura{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Add a website to scan</h2>
+<form method="post">
+    <div class="mb-3">
+        <label for="url" class="form-label">Website URL</label>
+        <input type="url" class="form-control" id="url" name="url" value="{{ url }}"
+               placeholder="https://example.com" required>
+    </div>
+    <div class="mb-3">
+        <label for="project_id" class="form-label">Project</label>
+        <select class="form-select" id="project_id" name="project_id" required>
+            {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Website</button>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-link">Cancel</a>
+</form>
+{% endblock %}
