@@ -1,0 +1,116 @@
+<style>
+    .findings-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .findings-table th {
+        text-align: left;
+        background-color: #2b2f36;
+        color: #ffffff;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .findings-table td {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+        vertical-align: top;
+    }
+
+    .findings-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .col-severity {
+        width: 10%;
+        white-space: nowrap;
+    }
+
+    .col-title {
+        width: 30%;
+    }
+
+    .col-evidence {
+        width: 30%;
+    }
+
+    .col-recommendation {
+        width: 30%;
+    }
+
+    .finding-description {
+        margin: 0.25rem 0 0;
+        font-size: 0.85rem;
+        color: #555;
+    }
+
+    .col-evidence code {
+        font-size: 0.8rem;
+        word-break: break-word;
+        white-space: pre-wrap;
+        color: #444;
+    }
+
+    .severity-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .severity-badge-critical { background-color: #8b0000; }
+    .severity-badge-high     { background-color: #dc3545; }
+    .severity-badge-medium   { background-color: #fd7e14; }
+    .severity-badge-low      { background-color: #ffc107; color: #333; }
+    .severity-badge-info     { background-color: #6c757d; }
+
+    .no-findings-message {
+        font-style: italic;
+        color: #28a745;
+    }
+
+    .passed-checks-note {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .recommendations-list {
+        padding-left: 1.5rem;
+        margin: 1rem 0 1.5rem;
+    }
+
+    .recommendation-item {
+        margin-bottom: 0.6rem;
+        line-height: 1.5;
+    }
+
+    .recommendation-applies-to {
+        display: block;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.15rem;
+    }
+
+    .findings-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .findings-table thead {
+        display: table-header-group;
+    }
+
+    .findings-table tr {
+        page-break-inside: avoid;
+    }
+</style>

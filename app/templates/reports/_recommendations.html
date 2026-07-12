@@ -1,0 +1,21 @@
+{% macro recommendations_list(recommendations) %}
+{% if recommendations %}
+<ol class="recommendations-list">
+    {% for item in recommendations %}
+    <li class="recommendation-item severity-{{ item.severity.value }}">
+        <span class="severity-badge severity-badge-{{ item.severity.value }}">
+            {{ item.severity.value | upper }}
+        </span>
+        {{ item.text }}
+        {% if item.related_titles | length > 1 %}
+        <span class="recommendation-applies-to">
+            (applies to: {{ item.related_titles | join(", ") }})
+        </span>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ol>
+{% else %}
+<p class="no-findings-message">No action items — no issues were identified during this scan.</p>
+{% endif %}
+{% endmacro %}

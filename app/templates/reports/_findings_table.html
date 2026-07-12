@@ -1,0 +1,43 @@
+{% macro findings_table(findings) %}
+{% set failed_findings = findings | selectattr('passed', 'equalto', False) | list %}
+{% set passed_count = (findings | length) - (failed_findings | length) %}
+
+{% if failed_findings %}
+<table class="findings-table">
+    <thead>
+        <tr>
+            <th class="col-severity">Severity</th>
+            <th class="col-title">Finding</th>
+            <th class="col-evidence">Evidence</th>
+            <th class="col-recommendation">Recommendation</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for finding in failed_findings %}
+        <tr class="severity-{{ finding.severity.value }}">
+            <td class="col-severity">
+                <span class="severity-badge severity-badge-{{ finding.severity.value }}">
+                    {{ finding.severity.value | upper }}
+                </span>
+            </td>
+            <td class="col-title">
+                <strong>{{ finding.title }}</strong>
+                <p class="finding-description">{{ finding.description }}</p>
+            </td>
+            <td class="col-evidence"><code>{{ finding.evidence or "—" }}</code></td>
+            <td class="col-recommendation">{{ finding.recommendation or "—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="no-findings-message">No issues were identified during this scan.</p>
+{% endif %}
+
+{% if passed_count > 0 %}
+<p class="passed-checks-note">
+    {{ passed_count }} additional check{{ "s" if passed_count != 1 else "" }}
+    passed with no issues found.
+</p>
+{% endif %}
+{% endmacro %}
