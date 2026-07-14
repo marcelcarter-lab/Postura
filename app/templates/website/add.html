@@ -5,6 +5,7 @@
 {% block content %}
 <h2 class="mb-4">Add a website to scan</h2>
 <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="mb-3">
         <label for="url" class="form-label">Website URL</label>
         <input type="url" class="form-control" id="url" name="url" value="{{ url }}"

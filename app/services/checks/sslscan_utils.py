@@ -1,8 +1,17 @@
+import shutil
 import subprocess
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 from dataclasses import dataclass, field
 
-SSLSCAN_TIMEOUT = 120  # seconds
+SSLSCAN_TIMEOUT = 120  # seconds — sslscan opens a fresh connection per
+# protocol/cipher combination tested; a full scan against a server with
+# many enabled protocols/ciphers can take 60-90+ seconds. Confirmed via
+# live testing: a scan against badssl.com took ~59s.
+
+# Resolved once at import time rather than relying on subprocess.run()
+# to search $PATH at call time (addresses bandit B607: starting a
+# process with a partial executable path).
+SSLSCAN_PATH = shutil.which("sslscan")
 
 
 class SSLScanError(Exception):
@@ -17,17 +26,27 @@ class SSLScanResult:
 
 
 def run_sslscan(hostname: str, port: int = 443, timeout: int = SSLSCAN_TIMEOUT) -> SSLScanResult:
-    """..."""
+    """Runs the external sslscan tool against hostname:port and parses
+    its XML output.
+
+    Unlike Python's ssl module (bound by the host's OpenSSL security
+    policy — confirmed unable to negotiate RC4/3DES even with
+    SECLEVEL=0), sslscan ships its own statically-linked OpenSSL build
+    with legacy protocols/ciphers intact, so it can reliably report
+    what a server actually offers, not just what our client is willing
+    to accept.
+    """
+    if SSLSCAN_PATH is None:
+        raise SSLScanError("sslscan is not installed in this environment")
+
     target = f"{hostname}:{port}"
     try:
-        proc = subprocess.run(
-            ["sslscan", "--no-colour", "--xml=-", target],
+        proc = subprocess.run(  # nosec B603 B607 - shell=False, list-form args, resolved absolute path, no shell interpretation of `target`
+            [SSLSCAN_PATH, "--no-colour", "--xml=-", target],
             capture_output=True,
             timeout=timeout,
             text=True,
         )
-    except FileNotFoundError as exc:
-        raise SSLScanError("sslscan is not installed in this environment") from exc
     except subprocess.TimeoutExpired as exc:
         raise SSLScanError(f"sslscan timed out after {timeout}s") from exc
 
@@ -43,9 +62,6 @@ def run_sslscan(hostname: str, port: int = 443, timeout: int = SSLSCAN_TIMEOUT) 
     if ssltest is None:
         raise SSLScanError("sslscan output missing <ssltest> element (target may be unreachable)")
 
-    # Read enabled protocol versions directly from <protocol> elements,
-    # independent of cipher results — this is the authoritative source
-    # for "does this server support this protocol at all".
     supported_protocols = set()
     for protocol_el in ssltest.findall("protocol"):
         if protocol_el.get("enabled") == "1":
@@ -53,10 +69,6 @@ def run_sslscan(hostname: str, port: int = 443, timeout: int = SSLSCAN_TIMEOUT) 
             version = protocol_el.get("version")
             supported_protocols.add(_format_protocol_name(proto_type, version))
 
-    # A cipher can be reported as "preferred" (the server's top choice
-    # for that protocol) or "accepted" (also usable but not preferred).
-    # Both indicate the server genuinely offers that cipher — only
-    # "rejected"/other statuses should be excluded.
     ciphers = []
     for cipher_el in ssltest.findall("cipher"):
         if cipher_el.get("status") not in ("accepted", "preferred"):

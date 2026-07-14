@@ -8,6 +8,7 @@ from app.models.website import Website
 from app.models.scan import Scan
 from app.services.risk_scoring import calculate_risk_score, score_to_color
 from app.services.scan_runner import execute_scan
+from app.services.url_validation import validate_website_url
 
 website_bp = Blueprint("website", __name__)
 
@@ -34,11 +35,7 @@ def add_website():
         url = request.form.get("url", "").strip()
         project_id = request.form.get("project_id", "").strip()
 
-        error = None
-        if not url:
-            error = "URL is required."
-        elif not (url.startswith("http://") or url.startswith("https://")):
-            error = "URL must start with http:// or https://."
+        error = validate_website_url(url)
 
         if not error:
             project = Project.query.filter_by(
@@ -77,11 +74,7 @@ def edit_website(website_id):
         url = request.form.get("url", "").strip()
         name = request.form.get("name", "").strip()
 
-        error = None
-        if not url:
-            error = "URL is required."
-        elif not (url.startswith("http://") or url.startswith("https://")):
-            error = "URL must start with http:// or https://."
+        error = validate_website_url(url)
 
         if error:
             flash(error, "danger")

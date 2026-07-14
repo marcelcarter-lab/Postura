@@ -5,6 +5,7 @@
 {% block content %}
 <h2 class="mb-4">Edit website</h2>
 <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="mb-3">
         <label for="name" class="form-label">Name (optional)</label>
         <input type="text" class="form-control" id="name" name="name" value="{{ name }}"
@@ -22,6 +23,7 @@
 <hr class="my-4">
 <form method="post" action="{{ url_for('website.delete_website', website_id=website.id) }}"
       onsubmit="return confirm('Delete this website and all its scan history? This cannot be undone.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn btn-danger">Delete Website</button>
 </form>
 {% endblock %}

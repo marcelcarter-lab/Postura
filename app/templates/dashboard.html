@@ -43,6 +43,7 @@
             </td>
             <td>
                 <form method="post" action="{{ url_for('website.trigger_scan_ui', website_id=row.website.id) }}" class="d-inline loading-on-submit">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm btn-primary">Scan Now</button>
                 </form>
                 <a href="{{ url_for('website.scan_history', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">History</a>
