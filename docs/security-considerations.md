@@ -169,3 +169,12 @@ documented above (rate limiting, background job execution, DNS
 rebinding edge case) are known and intentional scope boundaries, not
 oversights, and are reasonable next steps for continued development
 beyond this initial phase.
+
+**Scheduled scanning (Sprint 6)** inherits this same single-instance
+constraint: the background scheduler runs within the app process
+itself, with explicit safeguards (an environment flag plus a Postgres
+advisory lock) to prevent duplicate scheduled scans if the app is ever
+run as multiple concurrent processes — but this does not enable
+horizontal scaling of scheduled scan throughput. See
+[architecture.md](architecture.md#key-design-decisions) for the full
+explanation.

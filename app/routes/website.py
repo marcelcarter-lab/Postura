@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
+from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.project import Project
@@ -9,6 +10,7 @@ from app.models.scan import Scan
 from app.services.risk_scoring import calculate_risk_score, score_to_color
 from app.services.scan_runner import execute_scan
 from app.services.url_validation import validate_website_url
+from app.services.scheduling import FREQUENCY_INTERVALS
 
 website_bp = Blueprint("website", __name__)
 
@@ -84,6 +86,24 @@ def edit_website(website_id):
 
         website.url = url
         website.name = name or None
+
+        schedule_enabled = request.form.get("schedule_enabled") == "on"
+        selected_frequency = request.form.get("frequency", "daily")
+
+        if schedule_enabled:
+            if selected_frequency not in FREQUENCY_INTERVALS:
+                selected_frequency = "daily"
+
+            if website.frequency != selected_frequency:
+                # Frequency is newly enabled, or was changed to a
+                # different cadence — (re)set next_run_at from now,
+                # using the newly selected interval.
+                website.frequency = selected_frequency
+                website.next_run_at = datetime.now(timezone.utc) + FREQUENCY_INTERVALS[selected_frequency]
+        else:
+            website.frequency = None
+            website.next_run_at = None
+
         db.session.commit()
 
         flash("Website updated successfully.", "success")

@@ -136,3 +136,38 @@ running headers/footers) than a web page.
 ## Directory structure
 
 See the [README](../README.md#project-structure) for the file/folder layout.
+
+- **Scheduled scanning is single-instance by design.** The background
+  scheduler (APScheduler's `BackgroundScheduler`, added in Sprint 6)
+  runs inside the same process as the Flask app itself — there is no
+  separate worker/queue service. If this app is ever deployed with
+  multiple concurrent processes (e.g. a production WSGI server
+  configured with multiple workers, or multiple container replicas
+  behind a load balancer), only **one** of those processes should
+  actually run scheduled scans — otherwise every process would
+  independently pick up the same due websites and run duplicate scans
+  simultaneously.
+
+  This is enforced by two layered mechanisms (see
+  `app/services/scheduling.py` and `app/__init__.py`):
+  1. An explicit `SCHEDULER_ENABLED` environment variable, intended to
+     be set to `true` on exactly one instance in a multi-process
+     deployment.
+  2. A Postgres session-level advisory lock
+     (`pg_try_advisory_lock`), acquired automatically at startup as a
+     fail-safe — even if `SCHEDULER_ENABLED` is misconfigured
+     identically across multiple processes, only the first process to
+     acquire the lock will actually start its scheduler; the rest
+     detect the lock is held and skip starting theirs.
+
+  **This does not currently support horizontal scaling of the
+  scanning workload itself** — even with the locking correctly
+  preventing duplicate scans, only one process's scheduler is ever
+  actively running scheduled scans at a time, meaning scan throughput
+  for scheduled jobs doesn't increase by adding more app instances.
+  Scaling scheduled scan throughput would require a genuinely
+  different architecture — e.g. a dedicated task queue (Celery, RQ)
+  with multiple worker processes pulling from a shared queue, rather
+  than each app instance running its own independent scheduler. This
+  is a reasonable, explicit scope boundary for the current MVP, not an
+  oversight.

@@ -68,3 +68,15 @@ intentionally insecure-by-default to force real deployments to set
 their own value (enforced further in the "Remove default credentials"
 task later in this sprint). Confirmed `.env` (the real file) is
 correctly gitignored.
+
+## Note: one intentional exception to "no raw SQL" (Sprint 6)
+
+`app/services/scheduling.py`'s `try_acquire_scheduler_lock()` uses
+SQLAlchemy's `text()` to call Postgres's `pg_try_advisory_lock()`
+function — a database-session-level primitive with no ORM equivalent,
+used to ensure only one process runs the background scheduler in a
+multi-worker deployment. This is a deliberate, justified exception to
+the ORM-only pattern confirmed in the earlier DB query audit, not a
+regression — the parameter (`SCHEDULER_LOCK_KEY`, a fixed integer
+constant) is still passed as a bound parameter, not string-interpolated,
+so this remains safely parameterized despite using `text()`.

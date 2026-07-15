@@ -16,6 +16,27 @@
         <input type="url" class="form-control" id="url" name="url" value="{{ url }}"
                placeholder="https://example.com" required>
     </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="schedule_enabled" name="schedule_enabled"
+               {% if website.frequency %}checked{% endif %}>
+        <label class="form-check-label" for="schedule_enabled">
+            Enable automatic scanning
+        </label>
+    </div>
+
+    <div class="mb-3">
+        <label for="frequency" class="form-label">Scan frequency</label>
+        <select class="form-select" id="frequency" name="frequency">
+            <option value="daily" {% if website.frequency == "daily" or not website.frequency %}selected{% endif %}>Daily</option>
+            <option value="weekly" {% if website.frequency == "weekly" %}selected{% endif %}>Weekly</option>
+            <option value="monthly" {% if website.frequency == "monthly" %}selected{% endif %}>Monthly</option>
+        </select>
+        {% if website.frequency and website.next_run_at %}
+        <div class="form-text">
+            Next scan: {{ website.next_run_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+        </div>
+        {% endif %}
+    </div>
     <button type="submit" class="btn btn-primary">Save Changes</button>
     <a href="{{ url_for('main.dashboard') }}" class="btn btn-link">Cancel</a>
 </form>

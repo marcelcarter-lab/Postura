@@ -1,6 +1,8 @@
+import os
+
 from flask import Flask
 from config import Config
-from app.extensions import db, migrate, login_manager, csrf
+from app.extensions import db, migrate, login_manager, csrf, scheduler
 
 
 def create_app(config_class=Config):
@@ -32,4 +34,50 @@ def create_app(config_class=Config):
     from app.routes.scan_view import scan_view_bp
     app.register_blueprint(scan_view_bp)
 
+    _start_scheduler_if_appropriate(app)
+
     return app
+
+
+def _start_scheduler_if_appropriate(app):
+    """Starts the background scheduler exactly once, guarded by three
+    independent checks:
+    1. Not already running (idempotency, e.g. across repeated
+       create_app() calls in tests).
+    2. Not the Flask reloader's parent watcher process (dev-server-
+       specific double-start prevention).
+    3. SCHEDULER_ENABLED env flag AND a Postgres advisory lock — both
+       must allow it, ensuring only one process across a potential
+       multi-worker deployment actually runs scheduled jobs, even if
+       the env flag is misconfigured (the advisory lock is an
+       automatic fallback, not just a redundant check).
+    """
+    if scheduler.running:
+        return
+
+    is_reloader_parent = os.environ.get("WERKZEUG_RUN_MAIN") != "true"
+    reloader_enabled = app.config.get("DEBUG", False) or os.environ.get("FLASK_DEBUG") == "1"
+
+    if reloader_enabled and is_reloader_parent:
+        return
+
+    scheduler_enabled_flag = os.environ.get("SCHEDULER_ENABLED", "true").lower() == "true"
+    if not scheduler_enabled_flag:
+        app.logger.warning("Scheduler disabled via SCHEDULER_ENABLED env flag.")
+        return
+
+    from app.services.scheduling import try_acquire_scheduler_lock
+
+    with app.app_context():
+        lock_acquired = try_acquire_scheduler_lock(db.session)
+
+    if not lock_acquired:
+        app.logger.warning(
+            "Scheduler NOT started: another process already holds the "
+            "scheduler advisory lock (likely a multi-worker deployment "
+            "where a different process is running the scheduler)."
+        )
+        return
+
+    scheduler.start()
+    app.logger.warning("Background scheduler started (advisory lock acquired).")
