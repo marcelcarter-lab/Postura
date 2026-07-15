@@ -51,6 +51,11 @@ def _start_scheduler_if_appropriate(app):
        multi-worker deployment actually runs scheduled jobs, even if
        the env flag is misconfigured (the advisory lock is an
        automatic fallback, not just a redundant check).
+
+    Once started, registers run_scheduled_scans() to run on a
+    repeating interval (SCHEDULER_INTERVAL_SECONDS, default 300s/5min
+    — set lower, e.g. 60, for quick dev-mode verification that
+    scheduled scans actually fire).
     """
     if scheduler.running:
         return
@@ -79,5 +84,29 @@ def _start_scheduler_if_appropriate(app):
         )
         return
 
+    interval_seconds = int(os.environ.get("SCHEDULER_INTERVAL_SECONDS", "300"))
+
+    def _run_scheduled_scans_with_context():
+        # The scheduler calls this on its own background thread, with
+        # no Flask app/request context — must push one explicitly so
+        # run_scheduled_scans() (and everything it calls, like
+        # db.session) works correctly.
+        with app.app_context():
+            from app.services.scheduling import run_scheduled_scans
+
+            run_scheduled_scans()
+
+    scheduler.add_job(
+        _run_scheduled_scans_with_context,
+        "interval",
+        seconds=interval_seconds,
+        id="run_scheduled_scans",
+        replace_existing=True,
+    )
+
     scheduler.start()
-    app.logger.warning("Background scheduler started (advisory lock acquired).")
+    app.logger.warning(
+        "Background scheduler started (advisory lock acquired), "
+        "checking for due scans every %s seconds.",
+        interval_seconds,
+    )
