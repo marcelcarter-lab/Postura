@@ -5,40 +5,6 @@ from config import Config
 from app.extensions import db, migrate, login_manager, csrf, scheduler
 
 
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-
-    db.init_app(app)
-    migrate.init_app(app, db)
-    login_manager.init_app(app)
-    login_manager.login_view = "auth.login"
-    login_manager.login_message_category = "info"
-    csrf.init_app(app)
-
-    with app.app_context():
-        from app import models  # noqa: F401 — ensures models are registered
-
-    from app.routes.auth import auth_bp
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-
-    from app.routes.main import main_bp
-    app.register_blueprint(main_bp)
-
-    from app.routes.scan import scan_bp
-    app.register_blueprint(scan_bp)
-
-    from app.routes.website import website_bp
-    app.register_blueprint(website_bp)
-
-    from app.routes.scan_view import scan_view_bp
-    app.register_blueprint(scan_view_bp)
-
-    _start_scheduler_if_appropriate(app)
-
-    return app
-
-
 def _start_scheduler_if_appropriate(app):
     """Starts the background scheduler exactly once, guarded by three
     independent checks:
@@ -58,6 +24,16 @@ def _start_scheduler_if_appropriate(app):
     scheduled scans actually fire).
     """
     if scheduler.running:
+        return
+
+    if app.config.get("TESTING"):
+        # Never start the real background scheduler during tests —
+        # it would try to run against whatever test database is
+        # configured (e.g. SQLite in-memory, which doesn't support
+        # Postgres-specific functions like pg_try_advisory_lock), and
+        # more fundamentally, tests should never have a real recurring
+        # background job running during test execution regardless of
+        # database backend.
         return
 
     is_reloader_parent = os.environ.get("WERKZEUG_RUN_MAIN") != "true"
@@ -110,3 +86,37 @@ def _start_scheduler_if_appropriate(app):
         "checking for due scans every %s seconds.",
         interval_seconds,
     )
+
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
+    login_manager.login_message_category = "info"
+    csrf.init_app(app)
+
+    with app.app_context():
+        from app import models  # noqa: F401 — ensures models are registered
+
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+
+    from app.routes.main import main_bp
+    app.register_blueprint(main_bp)
+
+    from app.routes.scan import scan_bp
+    app.register_blueprint(scan_bp)
+
+    from app.routes.website import website_bp
+    app.register_blueprint(website_bp)
+
+    from app.routes.scan_view import scan_view_bp
+    app.register_blueprint(scan_view_bp)
+
+    _start_scheduler_if_appropriate(app)
+
+    return app
