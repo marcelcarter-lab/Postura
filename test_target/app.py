@@ -3,33 +3,32 @@ from flask import Flask, send_from_directory
 app = Flask(__name__)
 
 
+@app.after_request
+def add_security_header(response):
+    # Deliberately added mid-Sprint-7 to create a real, observable
+    # change for the diff feature's manual regression test — this
+    # target previously sent zero security headers at all.
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 @app.route("/")
 def index():
-    # Intentionally NO security headers set here (no CSP, HSTS,
-    # X-Frame-Options, etc.) — the point of this target is to be
-    # scanned and have Postura's header checks correctly flag all of
-    # them as missing.
     return "<html><body><h1>Vulnerable Test Target</h1></body></html>"
 
 
 @app.route("/.git/<path:filename>")
 def fake_git(filename):
-    # Serves fake .git files from a local folder, simulating an
-    # accidentally-committed .git directory being exposed on a live
-    # site — a classic real-world misconfiguration.
     return send_from_directory("fake_git", filename)
 
 
 @app.route("/wp-content/")
 def fake_wp_content():
-    # Simulates a WordPress CMS fingerprint signature existing, so
-    # CMSFingerprintCheck has something real to detect.
     return "", 200
 
 
 @app.route("/backup/")
 def directory_listing():
-    # Simulates an Apache-style directory listing page.
     return (
         "<html><head><title>Index of /backup/</title></head>"
         "<body><h1>Index of /backup/</h1>"

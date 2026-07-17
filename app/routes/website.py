@@ -11,6 +11,7 @@ from app.services.risk_scoring import calculate_risk_score, score_to_color
 from app.services.scan_runner import execute_scan
 from app.services.url_validation import validate_website_url
 from app.services.scheduling import FREQUENCY_INTERVALS
+from app.services.scan_diff import find_previous_scan
 
 website_bp = Blueprint("website", __name__)
 
@@ -128,6 +129,7 @@ def delete_website(website_id):
     flash("Website and all associated scan history deleted.", "info")
     return redirect(url_for("main.dashboard"))
 
+
 @website_bp.route("/websites/<int:website_id>/history")
 @login_required
 def scan_history(website_id):
@@ -147,10 +149,27 @@ def scan_history(website_id):
     for scan in scans:
         score = None
         score_color = None
+        trend = None
         if scan.status == "completed":
             score = calculate_risk_score(scan.findings)
             score_color = score_to_color(score)
-        scan_rows.append({"scan": scan, "score": score, "score_color": score_color})
+
+            previous_scan = find_previous_scan(scan)
+            if previous_scan is not None:
+                previous_score = calculate_risk_score(previous_scan.findings)
+                if score > previous_score:
+                    trend = "up"
+                elif score < previous_score:
+                    trend = "down"
+                else:
+                    trend = "flat"
+            # If there's no previous scan, trend stays None — the
+            # website's first scan has nothing to compare against, so
+            # no trend indicator should show for it.
+
+        scan_rows.append(
+            {"scan": scan, "score": score, "score_color": score_color, "trend": trend}
+        )
 
     return render_template("website/history.html", website=website, scan_rows=scan_rows)
 

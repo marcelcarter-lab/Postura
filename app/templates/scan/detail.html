@@ -15,6 +15,11 @@
         <a href="{{ url_for('scan_view.download_report', scan_id=scan.id) }}" class="btn btn-outline-primary btn-sm">
             📄 Download PDF Report
         </a>
+        {% if previous_scan %}
+        <a href="{{ url_for('scan_view.compare_scans', scan_id=[previous_scan.id, scan.id]) }}" class="btn btn-outline-secondary btn-sm">
+            🔄 Compare vs Previous Scan
+        </a>
+        {% endif %}
     </div>
 </div>
 
