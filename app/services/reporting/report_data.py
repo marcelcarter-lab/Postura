@@ -131,3 +131,41 @@ def build_recommendations(findings: list) -> list:
             grouped[key].related_titles.append(finding.title)
 
     return list(grouped.values())
+
+def report_data_to_dict(report: "ReportData") -> dict:
+    """Converts a ReportData object into a plain, JSON-serializable
+    dict. Used by the JSON export endpoint. Severity enum members are
+    converted to their string values, and the datetime is converted
+    to ISO 8601 format — both are common, unambiguous conventions for
+    JSON APIs.
+    """
+    return {
+        "website_url": report.website_url,
+        "website_name": report.website_name,
+        "scan_id": report.scan_id,
+        "scan_date": report.scan_date.isoformat(),
+        "risk_score": report.risk_score,
+        "score_color": report.score_color,
+        "total_findings": report.total_findings,
+        "failed_findings": report.failed_findings,
+        "findings": [
+            {
+                "check_type": f.check_type,
+                "severity": f.severity.value,
+                "title": f.title,
+                "description": f.description,
+                "evidence": f.evidence,
+                "recommendation": f.recommendation,
+                "passed": f.passed,
+            }
+            for f in report.findings
+        ],
+        "recommendations": [
+            {
+                "text": r.text,
+                "severity": r.severity.value,
+                "related_titles": r.related_titles,
+            }
+            for r in report.recommendations
+        ],
+    }

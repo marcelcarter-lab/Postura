@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, app
 from config import Config
 from app.extensions import db, migrate, login_manager, csrf, scheduler
 
@@ -117,6 +117,10 @@ def create_app(config_class=Config):
     from app.routes.scan_view import scan_view_bp
     app.register_blueprint(scan_view_bp)
 
+    from app.routes.admin import admin_bp
+    app.register_blueprint(admin_bp)
+
     _start_scheduler_if_appropriate(app)
 
     return app
+

@@ -15,6 +15,9 @@
         <a href="{{ url_for('scan_view.download_report', scan_id=scan.id) }}" class="btn btn-outline-primary btn-sm">
             📄 Download PDF Report
         </a>
+        <a href="{{ url_for('scan_view.export_scan_json', scan_id=scan.id) }}" class="btn btn-outline-secondary btn-sm" download>
+            🔧 Export JSON
+        </a>
         {% if previous_scan %}
         <a href="{{ url_for('scan_view.compare_scans', scan_id=[previous_scan.id, scan.id]) }}" class="btn btn-outline-secondary btn-sm">
             🔄 Compare vs Previous Scan

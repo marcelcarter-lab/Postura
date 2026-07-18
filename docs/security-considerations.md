@@ -178,3 +178,19 @@ run as multiple concurrent processes — but this does not enable
 horizontal scaling of scheduled scan throughput. See
 [architecture.md](architecture.md#key-design-decisions) for the full
 explanation.
+
+## WordPress vulnerability database (Sprint 8)
+
+`app/services/checks/wordpress_vulnerabilities.py` contains a small,
+manually-curated list of known WordPress core vulnerabilities by
+version range, used to flag specific known issues when a WordPress
+version is detected (see the "Refine WordPress version detection"
+task). **This list is explicitly NOT a complete or continuously
+up-to-date vulnerability feed** — it was seeded with a handful of
+well-documented historical examples during initial development.
+Before relying on this feature for real security assessments, it
+should be supplemented with (or replaced by) a live, actively
+maintained source such as the WPScan Vulnerability Database. Findings
+generated from this check should be understood as "known historical
+issues for this version, if the list happens to include it" rather
+than "a complete vulnerability assessment of this WordPress version."

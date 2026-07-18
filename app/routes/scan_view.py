@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, send_file, redirect, url_for, flash, request
+from flask import Blueprint, render_template, abort, send_file, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
 
@@ -11,6 +11,7 @@ from app.services.reporting.report_data import build_report_data
 from app.services.reporting.executive_summary import generate_executive_summary
 from app.services.reporting.pdf_generator import render_report_html, generate_pdf
 from app.services.scan_diff import diff_scans_by_id, ScanDiffError, find_previous_scan
+from app.services.reporting.report_data import build_report_data, report_data_to_dict
 
 from io import BytesIO
 
@@ -161,3 +162,24 @@ def compare_scans():
         score_delta=score_delta,
         diff=diff,
     )
+
+@scan_view_bp.route("/scans/<int:scan_id>/export.json")
+@login_required
+def export_scan_json(scan_id):
+    scan = (
+        Scan.query.join(Website)
+        .join(Project)
+        .filter(Scan.id == scan_id, Project.owner_id == current_user.id)
+        .first()
+    )
+    if scan is None:
+        abort(404, description="Scan not found")
+
+    report = build_report_data(scan)
+    data = report_data_to_dict(report)
+
+    filename = f"postura-export-{report.website_name.replace(' ', '-').lower()}-{scan.id}.json"
+
+    response = jsonify(data)
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response

@@ -17,6 +17,8 @@ from app.services.checks.server_header_check import ServerHeaderCheck
 from app.services.checks.x_powered_by_check import XPoweredByCheck
 from app.services.checks.meta_generator_check import MetaGeneratorCheck
 from app.services.checks.cms_fingerprint_check import CMSFingerprintCheck
+from app.services.checks.js_framework_check import JSFrameworkCheck
+from app.services.checks.wordpress_version_check import WordPressVersionCheck
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,10 @@ ENABLED_CHECKS = [
     XPoweredByCheck,
     MetaGeneratorCheck,
     CMSFingerprintCheck,
+    # Sprint 8: expanded fingerprinting
+    JSFrameworkCheck,
+    WordPressVersionCheck,
+
 ]
 
 
