@@ -120,6 +120,9 @@ def create_app(config_class=Config):
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp)
 
+    from app.services.risk_scoring import score_to_color
+    app.jinja_env.globals["score_to_color"] = score_to_color
+
     _start_scheduler_if_appropriate(app)
 
     return app

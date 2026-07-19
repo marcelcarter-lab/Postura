@@ -26,6 +26,30 @@
     </div>
 </div>
 
+{% if compliance_breakdown %}
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>OWASP Compliance Breakdown</strong>
+    </div>
+    <div class="card-body">
+        {% for cat in compliance_breakdown %}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <span>{{ cat.category }}</span>
+                <span class="text-muted">{{ cat.passed_count }}/{{ cat.total_count }} ({{ cat.percentage }}%)</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-{{ score_to_color(cat.percentage) }}" role="progressbar"
+                     style="width: {{ cat.percentage }}%;"
+                     aria-valuenow="{{ cat.percentage }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {% for severity in severity_order %}
     {% set findings = findings_by_severity[severity] %}
     {% if findings %}

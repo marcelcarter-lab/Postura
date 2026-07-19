@@ -6,6 +6,46 @@
 <h2 class="my-4">Scan History — {{ website.display_name }}</h2>
 <p class="text-muted">{{ website.url }}</p>
 
+{% if trend_chart_data.labels|length >= 2 %}
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Score Trend</strong>
+    </div>
+    <div class="card-body">
+        <canvas id="trendChart" height="80"></canvas>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ trend_chart_data.labels | tojson }},
+                datasets: [{
+                    label: 'Security Score',
+                    data: {{ trend_chart_data.scores | tojson }},
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.2,
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% elif trend_chart_data.labels|length == 1 %}
+<p class="text-muted">Only one completed scan so far — a trend chart needs at least two to show a meaningful line.</p>
+{% endif %}
+
 {% if scan_rows %}
 <form method="get" action="{{ url_for('scan_view.compare_scans') }}">
     <table class="table table-hover align-middle">

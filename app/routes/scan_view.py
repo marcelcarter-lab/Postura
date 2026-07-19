@@ -12,6 +12,7 @@ from app.services.reporting.executive_summary import generate_executive_summary
 from app.services.reporting.pdf_generator import render_report_html, generate_pdf
 from app.services.scan_diff import diff_scans_by_id, ScanDiffError, find_previous_scan
 from app.services.reporting.report_data import build_report_data, report_data_to_dict
+from app.services.compliance.compliance_scoring import calculate_compliance_by_category
 
 from io import BytesIO
 
@@ -26,7 +27,6 @@ SEVERITY_DISPLAY_ORDER = [
     Severity.LOW,
     Severity.INFO,
 ]
-
 
 @scan_view_bp.route("/scans/<int:scan_id>")
 @login_required
@@ -48,6 +48,7 @@ def scan_detail(scan_id):
     score = calculate_risk_score(scan.findings)
     score_color = score_to_color(score)
     previous_scan = find_previous_scan(scan)
+    compliance_breakdown = calculate_compliance_by_category(scan.findings)
 
     return render_template(
         "scan/detail.html",
@@ -58,6 +59,7 @@ def scan_detail(scan_id):
         findings_by_severity=findings_by_severity,
         severity_order=SEVERITY_DISPLAY_ORDER,
         previous_scan=previous_scan,
+        compliance_breakdown=compliance_breakdown,
     )
 
 @scan_view_bp.route("/scans/<int:scan_id>/report-preview")

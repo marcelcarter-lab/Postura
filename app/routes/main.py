@@ -42,3 +42,8 @@ def dashboard():
         )
 
     return render_template("dashboard.html", website_rows=website_rows)
+
+@main_bp.route("/chartjs-test")
+@login_required
+def chartjs_test():
+    return render_template("chartjs_test.html")

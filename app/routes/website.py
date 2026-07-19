@@ -12,6 +12,7 @@ from app.services.scan_runner import execute_scan
 from app.services.url_validation import validate_website_url
 from app.services.scheduling import FREQUENCY_INTERVALS
 from app.services.scan_diff import find_previous_scan
+from app.services.compliance.trend_data import get_score_trend_data
 
 website_bp = Blueprint("website", __name__)
 
@@ -163,15 +164,20 @@ def scan_history(website_id):
                     trend = "down"
                 else:
                     trend = "flat"
-            # If there's no previous scan, trend stays None — the
-            # website's first scan has nothing to compare against, so
-            # no trend indicator should show for it.
 
         scan_rows.append(
             {"scan": scan, "score": score, "score_color": score_color, "trend": trend}
         )
 
-    return render_template("website/history.html", website=website, scan_rows=scan_rows)
+    trend_chart_data = get_score_trend_data(website.id)
+
+    return render_template(
+        "website/history.html",
+        website=website,
+        scan_rows=scan_rows,
+        trend_chart_data=trend_chart_data,
+    )
+
 
 @website_bp.route("/websites/<int:website_id>/scan", methods=["POST"])
 @login_required
