@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, app
 from config import Config
-from app.extensions import db, migrate, login_manager, csrf, scheduler
+from app.extensions import db, migrate, login_manager, csrf, scheduler, mail
 
 
 def _start_scheduler_if_appropriate(app):
@@ -98,6 +98,7 @@ def create_app(config_class=Config):
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
     csrf.init_app(app)
+    mail.init_app(app)
 
     with app.app_context():
         from app import models  # noqa: F401 — ensures models are registered
@@ -122,6 +123,9 @@ def create_app(config_class=Config):
 
     from app.services.risk_scoring import score_to_color
     app.jinja_env.globals["score_to_color"] = score_to_color
+
+    from app.routes.settings import settings_bp
+    app.register_blueprint(settings_bp)
 
     _start_scheduler_if_appropriate(app)
 

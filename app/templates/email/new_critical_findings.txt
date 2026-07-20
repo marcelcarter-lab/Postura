@@ -1,0 +1,24 @@
+Postura Security Alert
+
+{{ website.display_name }} ({{ website.url }})
+{{ findings|length }} new critical finding{{ "s" if findings|length != 1 else "" }} detected
+
+Scan completed: {{ scan.completed_at.strftime('%B %d, %Y at %H:%M UTC') }}
+
+{% for finding in findings %}
+- {{ finding.title }}
+{% endfor %}
+
+{% if findings|length == 1 %}
+This finding was not present in the previous scan of this site.
+{% else %}
+These findings were not present in the previous scan of this site.
+{% endif %}
+
+View full details and recommended fixes:
+{{ report_url }}
+
+---
+You're receiving this because automatic scanning is enabled for this
+website in Postura. To adjust your notification preferences, visit
+your account settings.

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Postura{% endblock %}
+
+{% block content %}
+<h2 class="my-4">Account Settings</h2>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+        <p class="text-muted mb-1">Email</p>
+        <p>{{ current_user.email }}</p>
+    </div>
+
+    <hr>
+
+    <h5 class="mb-3">Notifications</h5>
+    <div class="mb-3 form-check form-switch">
+        <input type="checkbox" class="form-check-input" id="notify_on_critical_findings" name="notify_on_critical_findings"
+               {% if current_user.notify_on_critical_findings %}checked{% endif %}>
+        <label class="form-check-label" for="notify_on_critical_findings">
+            Email me when a scan finds new critical issues
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+</form>
+{% endblock %}

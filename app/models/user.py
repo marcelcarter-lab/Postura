@@ -16,15 +16,19 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(50), nullable=False, default=ROLE_STANDARD)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
+    # Sprint 10: whether this user receives automatic email
+    # notifications for newly-detected critical findings. Defaults to
+    # True — an opt-out model rather than opt-in, since a security
+    # tool's users likely want to know about new critical issues by
+    # default, and can turn it off if they find it too noisy (see
+    # "Build notification preferences UI" later in this sprint).
+    notify_on_critical_findings = db.Column(db.Boolean, nullable=False, default=True)
+
     def __repr__(self):
         return f"<User {self.email}>"
 
     @property
     def is_admin(self):
-        """Convenience property for checking admin status in routes/
-        templates, e.g. `if current_user.is_admin:` — reads more
-        clearly than comparing current_user.role == ROLE_ADMIN
-        everywhere it's needed."""
         return self.role == ROLE_ADMIN
 
 
