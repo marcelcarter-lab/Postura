@@ -171,3 +171,18 @@ See the [README](../README.md#project-structure) for the file/folder layout.
   than each app instance running its own independent scheduler. This
   is a reasonable, explicit scope boundary for the current MVP, not an
   oversight.
+
+- **PDF reports are generated on-demand, not stored.** Downloading a
+  report regenerates it from the current database state each time,
+  rather than persisting a rendered PDF file. Simpler, avoids storage
+  management, at the cost of slightly slower repeated downloads. This
+  remains true even for shareable public report links (Sprint 10):
+  the `Scan` model stores a share token and optional expiry timestamp
+  (persistent, since a link must remain valid across multiple future
+  visits), but the report content itself is still rendered fresh from
+  the scan's findings each time the link is visited — no rendered
+  report content is ever persisted. A separate `Report` model was
+  deliberately NOT introduced for this feature, since the existing
+  `Scan` model already provides the stable identity a share link
+  needs.
+  

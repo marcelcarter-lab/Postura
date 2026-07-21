@@ -127,6 +127,9 @@ def create_app(config_class=Config):
     from app.routes.settings import settings_bp
     app.register_blueprint(settings_bp)
 
+    from app.routes.public_report import public_report_bp
+    app.register_blueprint(public_report_bp)
+
     _start_scheduler_if_appropriate(app)
 
     return app
