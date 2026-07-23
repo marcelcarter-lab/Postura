@@ -1,18 +1,19 @@
 from flask import Blueprint, render_template, abort, send_file, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
+from app.extensions import db
 from app.models.project import Project
 from app.models.website import Website
 from app.models.scan import Scan
 from app.services.risk_scoring import calculate_risk_score, score_to_color
 from app.services.checks.schema import Severity
-from app.services.reporting.report_data import build_report_data
+from app.services.reporting.report_data import build_report_data, report_data_to_dict
 from app.services.reporting.executive_summary import generate_executive_summary
 from app.services.reporting.pdf_generator import render_report_html, generate_pdf
 from app.services.scan_diff import diff_scans_by_id, ScanDiffError, find_previous_scan
-from app.services.reporting.report_data import build_report_data, report_data_to_dict
 from app.services.compliance.compliance_scoring import calculate_compliance_by_category
+from app.services.share_tokens import generate_share_token
 
 from io import BytesIO
 
@@ -140,10 +141,6 @@ def compare_scans():
         flash(str(exc), "danger")
         return redirect(request.referrer or url_for("main.dashboard"))
 
-    # Determine which loaded scan is older/newer for display purposes
-    # (diff_scans_by_id already did this internally, but the route
-    # needs the actual Scan objects too, for showing dates/website
-    # info in the template header).
     scan_a = next(s for s in owned_scans if s.id == scan_id_a)
     scan_b = next(s for s in owned_scans if s.id == scan_id_b)
     older_scan, newer_scan = (
@@ -185,3 +182,48 @@ def export_scan_json(scan_id):
     response = jsonify(data)
     response.headers["Content-Disposition"] = f"attachment; filename={filename}"
     return response
+
+@scan_view_bp.route("/scans/<int:scan_id>/share", methods=["POST"])
+@login_required
+def generate_share_link(scan_id):
+    scan = (
+        Scan.query.join(Website)
+        .join(Project)
+        .filter(Scan.id == scan_id, Project.owner_id == current_user.id)
+        .first()
+    )
+    if scan is None:
+        abort(404, description="Scan not found")
+
+    scan.share_token = generate_share_token()
+    # 30-day expiry by default — a reasonable balance between link
+    # longevity and not leaving indefinitely-valid public links
+    # accumulating forever. Stored as naive UTC, consistent with how
+    # share_link_is_active reads this column.
+    scan.share_token_expires_at = (
+        datetime.now(timezone.utc) + timedelta(days=30)
+    ).replace(tzinfo=None)
+    db.session.commit()
+
+    flash("Share link generated.", "success")
+    return redirect(url_for("scan_view.scan_detail", scan_id=scan.id))
+
+
+@scan_view_bp.route("/scans/<int:scan_id>/share/revoke", methods=["POST"])
+@login_required
+def revoke_share_link(scan_id):
+    scan = (
+        Scan.query.join(Website)
+        .join(Project)
+        .filter(Scan.id == scan_id, Project.owner_id == current_user.id)
+        .first()
+    )
+    if scan is None:
+        abort(404, description="Scan not found")
+
+    scan.share_token = None
+    scan.share_token_expires_at = None
+    db.session.commit()
+
+    flash("Share link revoked.", "info")
+    return redirect(url_for("scan_view.scan_detail", scan_id=scan.id))

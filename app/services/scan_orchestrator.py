@@ -19,6 +19,9 @@ from app.services.checks.meta_generator_check import MetaGeneratorCheck
 from app.services.checks.cms_fingerprint_check import CMSFingerprintCheck
 from app.services.checks.js_framework_check import JSFrameworkCheck
 from app.services.checks.wordpress_version_check import WordPressVersionCheck
+from app.services.checks.missing_auth_rest_paths_check import MissingAuthOnRestPathsCheck
+from app.services.checks.verbose_error_leakage_check import VerboseErrorLeakageCheck
+from app.services.checks.permissive_cors_check import PermissiveCORSCheck
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,10 @@ ENABLED_CHECKS = [
     # Sprint 8: expanded fingerprinting
     JSFrameworkCheck,
     WordPressVersionCheck,
-
+    # Sprint 11: API security checks & error leakage
+    MissingAuthOnRestPathsCheck,
+    VerboseErrorLeakageCheck,
+    PermissiveCORSCheck,
 ]
 
 

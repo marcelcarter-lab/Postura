@@ -11,6 +11,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailhog:
+        condition: service_started
 
   db:
     image: postgres:16
@@ -29,6 +31,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: postura_mailhog
+    ports:
+      - "8025:8025"  # web UI — open this in your browser
+      - "1025:1025"  # SMTP — this is what the app connects to
 
   test-target:
     build: ./test_target

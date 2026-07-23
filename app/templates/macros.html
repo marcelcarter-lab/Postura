@@ -1,0 +1,48 @@
+{% macro limited_list(items, limit, prefix, render_item) %}
+{# Render first `limit` items #}
+{% for item in items[:limit] %}
+    {{ render_item(item) }}
+{% endfor %}
+{# If there are more items, render toggle button and hidden extra items #}
+{% if items|length > limit %}
+    <button class="btn btn-link btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#{{ prefix }}-extra" aria-expanded="false" aria-controls="{{ prefix }}-extra">
+        View {{ items|length - limit }} more
+    </button>
+    <div class="collapse" id="{{ prefix }}-extra">
+        {% for item in items[limit:] %}
+            {{ render_item(item) }}
+        {% endfor %}
+    </div>
+{% endif %}
+{% endmacro %}
+{% macro render_finding(finding) %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title fw-semibold mb-0 me-2">{{ finding.title }}</h5>
+            {% if finding.passed %}
+                <span class="badge bg-success rounded-pill">Passed</span>
+            {% else %}
+                <span class="badge bg-danger rounded-pill">Issue Found</span>
+            {% endif %}
+        </div>
+        <p class="card-text text-secondary mb-3">{{ finding.description }}</p>
+        {% if finding.recommendation %}
+        <div class="alert alert-light border mb-3 p-3">
+            <strong class="text-dark d-block mb-1">Recommendation:</strong>
+            <span class="text-secondary small">{{ finding.recommendation }}</span>
+        </div>
+        {% endif %}
+        {% if finding.evidence %}
+        <button class="btn btn-sm btn-outline-secondary" type="button"
+                data-bs-toggle="collapse" data-bs-target="#evidence-{{ finding.id }}"
+                aria-expanded="false" aria-controls="evidence-{{ finding.id }}">
+            Inspect Evidence
+        </button>
+        <div class="collapse mt-2" id="evidence-{{ finding.id }}">
+            <pre class="bg-dark text-light p-3 rounded font-monospace small mb-0" style="max-height: 240px; overflow-y: auto;">{{ finding.evidence }}</pre>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

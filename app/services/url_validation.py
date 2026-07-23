@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 
 ALLOWED_SCHEMES = {"http", "https"}
+DOTLESS_HOSTNAME_ALLOWLIST = {"localhost", "test-target"}
 
 
 def validate_website_url(url: str) -> str | None:
@@ -26,7 +27,7 @@ def validate_website_url(url: str) -> str | None:
     if not parsed.hostname:
         return "URL must include a valid hostname (e.g. https://example.com)."
 
-    if "." not in parsed.hostname and parsed.hostname != "localhost":
+    if "." not in parsed.hostname and parsed.hostname not in DOTLESS_HOSTNAME_ALLOWLIST:
         return "URL must include a valid domain (e.g. https://example.com)."
 
     if len(url) > 2048:

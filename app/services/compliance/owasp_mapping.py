@@ -47,6 +47,10 @@ CHECK_TYPE_TO_OWASP_CATEGORY = {
     "cms_fingerprint": OWASP_A06_VULNERABLE_COMPONENTS,
     "js_framework_fingerprint": OWASP_A06_VULNERABLE_COMPONENTS,
     "wordpress_version": OWASP_A06_VULNERABLE_COMPONENTS,
+    # --- Sprint 11: API security checks & error leakage ---
+    "missing_auth_rest_paths": OWASP_A01_BROKEN_ACCESS_CONTROL,
+    "verbose_error_leakage": OWASP_A05_SECURITY_MISCONFIGURATION,
+    "permissive_cors": OWASP_A05_SECURITY_MISCONFIGURATION,
 }
 
 

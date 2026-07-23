@@ -25,6 +25,7 @@ def build_session(
     max_redirects: int = DEFAULT_MAX_REDIRECTS,
     user_agent: str = DEFAULT_USER_AGENT,
     min_request_interval: float = DEFAULT_MIN_REQUEST_INTERVAL,
+    status_forcelist: list[int] | None = None,
 ) -> requests.Session:
     """Builds a requests.Session configured with automatic retries
     (using exponential backoff) for transient failures, a default
@@ -40,11 +41,15 @@ def build_session(
         min_request_interval=min_request_interval,
     )
 
+    if status_forcelist is None:
+        status_forcelist = [500, 502, 503, 504]
+
     retry_strategy = Retry(
         total=max_retries,
         backoff_factor=backoff_factor,
-        status_forcelist=[500, 502, 503, 504],
+        status_forcelist=status_forcelist,
         allowed_methods=["GET", "HEAD"],
+        raise_on_status=False if not status_forcelist else True,
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session.mount("https://", adapter)

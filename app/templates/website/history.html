@@ -3,13 +3,18 @@
 {% block title %}Scan History - Postura{% endblock %}
 
 {% block content %}
-<h2 class="my-4">Scan History — {{ website.display_name }}</h2>
-<p class="text-muted">{{ website.url }}</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Scan History — {{ website.display_name }}</h2>
+        <p class="text-muted mb-0"><code>{{ website.url }}</code></p>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Dashboard</a>
+</div>
 
 {% if trend_chart_data.labels|length >= 2 %}
 <div class="card mb-4">
-    <div class="card-header">
-        <strong>Score Trend</strong>
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0">Security Score Trend</h5>
     </div>
     <div class="card-body">
         <canvas id="trendChart" height="80"></canvas>
@@ -25,17 +30,24 @@
                 datasets: [{
                     label: 'Security Score',
                     data: {{ trend_chart_data.scores | tojson }},
-                    borderColor: '#0d6efd',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.08)',
                     fill: true,
-                    tension: 0.2,
+                    tension: 0.25,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#2563eb'
                 }]
             },
             options: {
+                responsive: true,
                 scales: {
                     y: {
                         beginAtZero: true,
                         max: 100,
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        grid: { display: false }
                     }
                 }
             }
@@ -43,70 +55,79 @@
     });
 </script>
 {% elif trend_chart_data.labels|length == 1 %}
-<p class="text-muted">Only one completed scan so far — a trend chart needs at least two to show a meaningful line.</p>
+<div class="alert alert-info shadow-sm mb-4">
+    ℹ️ Only one completed scan recorded so far. A trend chart requires at least two scans to display line progress.
+</div>
 {% endif %}
 
 {% if scan_rows %}
 <form method="get" action="{{ url_for('scan_view.compare_scans') }}">
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr>
-                <th>Compare</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Score</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in scan_rows %}
-            <tr>
-                <td>
-                    {% if row.scan.status == "completed" %}
-                    <input type="checkbox" name="scan_id" value="{{ row.scan.id }}" class="form-check-input">
-                    {% endif %}
-                </td>
-                <td>{{ row.scan.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td>
-                    <span class="badge bg-secondary text-capitalize">{{ row.scan.status }}</span>
-                </td>
-                <td>
-                    {% if row.score is not none %}
-                        <span class="badge bg-{{ row.score_color }}">{{ row.score }} / 100</span>
-                        {% if row.trend == "up" %}
-                            <span class="text-success" title="Improved since previous scan">▲</span>
-                        {% elif row.trend == "down" %}
-                            <span class="text-danger" title="Declined since previous scan">▼</span>
-                        {% elif row.trend == "flat" %}
-                            <span class="text-muted" title="No change since previous scan">—</span>
-                        {% endif %}
-                    {% else %}
-                        <span class="text-muted">—</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if row.scan.status == "completed" %}
-                        <a href="{{ url_for('scan_view.scan_detail', scan_id=row.scan.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <button type="submit" class="btn btn-primary" id="compare-button" disabled>
-        Compare Selected Scans
-    </button>
-    <div class="form-text">Select exactly two scans to compare.</div>
+    <div class="card overflow-hidden mb-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">Select</th>
+                        <th>Scan Date</th>
+                        <th>Status</th>
+                        <th>Score & Trend</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in scan_rows %}
+                    <tr>
+                        <td class="text-center">
+                            {% if row.scan.status == "completed" %}
+                            <input type="checkbox" name="scan_id" value="{{ row.scan.id }}" class="form-check-input">
+                            {% endif %}
+                        </td>
+                        <td class="fw-medium">{{ row.scan.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="badge bg-secondary text-capitalize rounded-pill">{{ row.scan.status }}</span>
+                        </td>
+                        <td>
+                            {% if row.score is not none %}
+                                <span class="badge rounded-pill bg-{{ row.score_color }} px-3 py-1 me-2 fs-6">{{ row.score }} / 100</span>
+                                {% if row.trend == "up" %}
+                                    <span class="text-success fw-bold" title="Improved since previous scan">▲ Improved</span>
+                                {% elif row.trend == "down" %}
+                                    <span class="text-danger fw-bold" title="Declined since previous scan">▼ Declined</span>
+                                {% elif row.trend == "flat" %}
+                                    <span class="text-muted" title="No change since previous scan">— Flat</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            {% if row.scan.status == "completed" %}
+                                <a href="{{ url_for('scan_view.scan_detail', scan_id=row.scan.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="d-flex align-items-center justify-content-between">
+        <button type="submit" class="btn btn-primary" id="compare-button" disabled>
+            Compare Selected Scans
+        </button>
+        <span class="form-text text-muted mb-0">Select exactly two scans to compare diff details.</span>
+    </div>
 </form>
 {% else %}
-<p class="text-muted">No scans yet for this website.</p>
+<div class="card text-center p-5">
+    <div class="card-body">
+        <h5 class="fw-bold">No scan history recorded</h5>
+        <p class="text-muted">This website has not been scanned yet.</p>
+    </div>
+</div>
 {% endif %}
 
 <script>
-    // Enable the compare button only when exactly 2 checkboxes are
-    // checked — comparing 0, 1, or 3+ scans doesn't make sense, and
-    // catching this client-side avoids a round-trip to the server
-    // just to be told to pick exactly two.
     document.addEventListener('DOMContentLoaded', function () {
         const checkboxes = document.querySelectorAll('input[name="scan_id"]');
         const compareButton = document.getElementById('compare-button');

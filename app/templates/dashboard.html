@@ -4,56 +4,72 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Your Websites</h2>
-    <a href="{{ url_for('website.add_website') }}" class="btn btn-primary">+ Add Website</a>
+    <div>
+        <h2 class="fw-bold mb-1">Your Websites</h2>
+        <p class="text-muted mb-0">Monitor and manage security posture scans across your target sites</p>
+    </div>
+    <a href="{{ url_for('website.add_website') }}" class="btn btn-primary shadow-sm">+ Add Website</a>
 </div>
 
 {% if website_rows %}
-<table class="table table-hover align-middle">
-    <thead>
-        <tr>
-            <th>Name / URL</th>
-            <th>Latest Score</th>
-            <th>Last Scanned</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in website_rows %}
-        <tr>
-            <td>
-                <strong>{{ row.website.display_name }}</strong>
-                {% if row.website.name %}
-                    <br><small class="text-muted">{{ row.website.url }}</small>
-                {% endif %}
-            </td>
-            <td>
-                {% if row.score is not none %}
-                    <span class="badge bg-{{ row.score_color }}">{{ row.score }} / 100</span>
-                {% else %}
-                    <span class="text-muted">Not scanned yet</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if row.latest_scan %}
-                    {{ row.latest_scan.started_at.strftime('%Y-%m-%d %H:%M') }}
-                {% else %}
-                    <span class="text-muted">—</span>
-                {% endif %}
-            </td>
-            <td>
-                <form method="post" action="{{ url_for('website.trigger_scan_ui', website_id=row.website.id) }}" class="d-inline loading-on-submit">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-primary">Scan Now</button>
-                </form>
-                <a href="{{ url_for('website.scan_history', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">History</a>
-                <a href="{{ url_for('website.edit_website', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Name / URL</th>
+                    <th>Latest Score</th>
+                    <th>Last Scanned</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in website_rows %}
+                <tr>
+                    <td>
+                        <strong class="d-block text-dark">{{ row.website.display_name }}</strong>
+                        {% if row.website.name %}
+                            <small class="text-muted">{{ row.website.url }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.score is not none %}
+                            <span class="badge rounded-pill bg-{{ row.score_color }} px-3 py-2 fs-6">{{ row.score }} / 100</span>
+                        {% else %}
+                            <span class="badge rounded-pill bg-light text-secondary border">Not scanned yet</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">
+                        {% if row.latest_scan %}
+                            {{ row.latest_scan.started_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% else %}
+                            <span>—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group btn-group-sm">
+                            <form method="post" action="{{ url_for('website.trigger_scan_ui', website_id=row.website.id) }}" class="d-inline loading-on-submit me-1">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-primary">Scan Now</button>
+                            </form>
+                            <a href="{{ url_for('website.scan_history', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">History</a>
+                            <a href="{{ url_for('website.edit_website', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% else %}
-<p class="text-muted">You haven't added any websites yet. <a href="{{ url_for('website.add_website') }}">Add one to get started</a>.</p>
+<div class="card text-center p-5">
+    <div class="card-body">
+        <div class="mb-3 fs-1">🌐</div>
+        <h4 class="fw-bold">No websites monitored yet</h4>
+        <p class="text-muted">You haven't added any websites to your dashboard. Add your first site to run automated security posture scans.</p>
+        <a href="{{ url_for('website.add_website') }}" class="btn btn-primary">Add Your First Website</a>
+    </div>
+</div>
 {% endif %}
 {% endblock %}

@@ -3,27 +3,45 @@
 {% block title %}Settings - Postura{% endblock %}
 
 {% block content %}
-<h2 class="my-4">Account Settings</h2>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-4">Account Settings</h2>
 
-<form method="post">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0">Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-sm-3 text-muted">Email address</div>
+                    <div class="col-sm-9 font-monospace">{{ current_user.email }}</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="mb-3">
-        <p class="text-muted mb-1">Email</p>
-        <p>{{ current_user.email }}</p>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch py-2">
+                        <input type="checkbox" class="form-check-input" id="notify_on_critical_findings" name="notify_on_critical_findings"
+                               {% if current_user.notify_on_critical_findings %}checked{% endif %}>
+                        <label class="form-check-label fw-medium ms-2" for="notify_on_critical_findings">
+                            Email me when a scan detects new critical security issues
+                        </label>
+                    </div>
+                    <div class="form-text mt-2 text-muted">
+                        Notifications are sent automatically when a newly executed posture scan uncovers critical severity findings that were not present in previous baseline scans.
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary px-4">Save Settings</button>
+        </form>
     </div>
-
-    <hr>
-
-    <h5 class="mb-3">Notifications</h5>
-    <div class="mb-3 form-check form-switch">
-        <input type="checkbox" class="form-check-input" id="notify_on_critical_findings" name="notify_on_critical_findings"
-               {% if current_user.notify_on_critical_findings %}checked{% endif %}>
-        <label class="form-check-label" for="notify_on_critical_findings">
-            Email me when a scan finds new critical issues
-        </label>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save Settings</button>
-</form>
+</div>
 {% endblock %}

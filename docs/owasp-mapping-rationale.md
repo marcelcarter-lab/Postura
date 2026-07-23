@@ -36,12 +36,23 @@ this OWASP category comprehensively."
 
 The most natural fit for the largest group of Postura's checks: all
 six HTTP security header checks (CSP, HSTS, X-Frame-Options,
-X-Content-Type-Options, Referrer-Policy, Permissions-Policy), plus
-exposure detection and directory listing detection. All of these are,
-definitionally, server/application misconfigurations — a missing
-header or an accidentally-public `.git` directory is exactly what
-"Security Misconfiguration" describes. This is the strongest,
-least-debatable set of mappings in the table.
+X-Content-Type-Options, Referrer-Policy, Permissions-Policy),
+exposure detection, directory listing detection, plus Sprint 11's
+verbose error leakage (`verbose_error_leakage`) and permissive CORS
+policy (`permissive_cors`) checks. All of these are, definitionally,
+server/application misconfigurations — a missing header, an exposed
+debug stack trace, or a wildcard `Access-Control-Allow-Origin` policy
+is exactly what "Security Misconfiguration" describes.
+
+### A01:2021 - Broken Access Control
+
+Added in Sprint 11: `missing_auth_rest_paths` checks whether common
+REST/API paths (such as `/api/users`, `/api/admin`, `/api/config`) respond
+with successful 2xx responses instead of an authentication challenge
+(401/403). While Postura remains primarily a configuration and exposure
+scanner rather than a full dynamic application security testing (DAST)
+suite, probing for unauthenticated REST API endpoints provides valuable
+heuristic coverage for OWASP A01:2021 Broken Access Control.
 
 ### A02:2021 - Cryptographic Failures
 
@@ -69,23 +80,6 @@ with a truly direct A06 fit. The rest are mapped here because
 disclosing a specific version number is the precondition an attacker
 would need to *check* for known vulnerabilities in that version — a
 reasonable, if indirect, connection.
-
-## Known gap: A01:2021 - Broken Access Control
-
-No current check maps to this category. Broken Access Control (in the
-OWASP Top 10's sense) concerns application-level authorization flaws —
-e.g. a user accessing another user's data by manipulating a URL
-parameter, missing permission checks on an action, etc. Postura does
-not test the *scanned website's* access control at all (only its own
-application's, which is a separate, internal concern documented in
-security-considerations.md). This is a genuine coverage gap relative
-to the full OWASP Top 10, not an oversight in the mapping table —
-there is currently no check that could reasonably map here, since
-nothing in Postura's check suite tests this vulnerability class.
-Closing this gap would require a fundamentally different kind of
-check (e.g. testing whether admin-only paths are reachable
-unauthenticated) — out of scope for the current MVP+Phase 2/3 feature
-set.
 
 ## Maintenance note
 
