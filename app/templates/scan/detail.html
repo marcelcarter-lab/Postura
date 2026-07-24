@@ -4,49 +4,54 @@
 
 {% block content %}
 {% import "macros.html" as m %}
-<div class="card mb-4">
-    <div class="card-body p-4">
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ url_for('main.dashboard') }}" class="text-secondary hover-text-primary text-decoration-none">&larr; Back to Dashboard</a>
+</div>
+
+<div class="card mb-4 border-glow shadow-lg">
+    <div class="card-body p-5">
         <div class="row align-items-center">
-            <div class="col-md-7 mb-3 mb-md-0">
-                <div class="d-flex align-items-center mb-2">
-                    <h2 class="fw-bold me-3 mb-0">{{ website.display_name }}</h2>
-                    <span class="badge rounded-pill bg-{{ score_color }} px-3 py-2 fs-5">{{ score }} / 100</span>
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <div class="d-flex align-items-center mb-3 flex-wrap gap-3">
+                    <h2 class="fw-bold mb-0 text-white">{{ website.display_name }}</h2>
+                    <span class="badge bg-{{ score_color }} px-4 py-2 fs-5 shadow">{{ score }} / 100</span>
                 </div>
-                <p class="text-muted mb-1"><code>{{ website.url }}</code></p>
-                <p class="text-muted small mb-0">Scanned on {{ scan.started_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                <p class="font-monospace text-secondary mb-2">{{ website.url }}</p>
+                <p class="text-muted small mb-0">Assessment completed on <span class="text-light">{{ scan.started_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></p>
             </div>
-            <div class="col-md-5 text-md-end">
-                <div class="d-flex flex-wrap gap-2 justify-content-md-end mb-2">
-                    <a href="{{ url_for('scan_view.download_report', scan_id=scan.id) }}" class="btn btn-outline-primary btn-sm">
-                        📄 PDF Report
+            <div class="col-lg-5 text-lg-end">
+                <div class="d-flex flex-wrap gap-2 justify-content-lg-end mb-3">
+                    <a href="{{ url_for('scan_view.download_report', scan_id=scan.id) }}" class="btn btn-outline-primary btn-sm px-3 py-2">
+                        📄 Download PDF
                     </a>
-                    <a href="{{ url_for('scan_view.export_scan_json', scan_id=scan.id) }}" class="btn btn-outline-secondary btn-sm" download>
+                    <a href="{{ url_for('scan_view.export_scan_json', scan_id=scan.id) }}" class="btn btn-outline-secondary btn-sm px-3 py-2" download>
                         🔧 Export JSON
                     </a>
                     {% if previous_scan %}
-                    <a href="{{ url_for('scan_view.compare_scans', scan_id=[previous_scan.id, scan.id]) }}" class="btn btn-outline-secondary btn-sm">
-                        🔄 Compare vs Previous
+                    <a href="{{ url_for('scan_view.compare_scans', scan_id=[previous_scan.id, scan.id]) }}" class="btn btn-outline-secondary btn-sm px-3 py-2">
+                        🔄 Compare Scan
                     </a>
                     {% endif %}
                 </div>
 
                 {% if scan.share_link_is_active %}
-                <div class="mt-2">
-                    <div class="input-group input-group-sm justify-content-md-end">
+                <div class="mt-3">
+                    <div class="input-group input-group-sm justify-content-lg-end">
                         <input type="text" class="form-control" id="shareLinkInput"
                                value="{{ request.url_root.rstrip('/') }}{{ url_for('public_report.public_report_view', token=scan.share_token) }}"
-                               readonly style="max-width: 280px;">
+                               readonly style="max-width: 280px; background-color: rgba(0,0,0,0.2);">
                         <button class="btn btn-outline-secondary" type="button" onclick="copyShareLink()">Copy Link</button>
                     </div>
                     <form method="post" action="{{ url_for('scan_view.revoke_share_link', scan_id=scan.id) }}" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 mt-1">Revoke public link</button>
+                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 mt-2 text-decoration-none">Revoke public link</button>
                     </form>
                 </div>
                 {% else %}
-                <form method="post" action="{{ url_for('scan_view.generate_share_link', scan_id=scan.id) }}" class="mt-2">
+                <form method="post" action="{{ url_for('scan_view.generate_share_link', scan_id=scan.id) }}" class="mt-3 text-lg-end">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-outline-secondary btn-sm">🔗 Generate Shareable Link</button>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm px-3 py-2">🔗 Generate Shareable Link</button>
                 </form>
                 {% endif %}
             </div>
@@ -55,20 +60,20 @@
 </div>
 
 {% if compliance_breakdown %}
-<div class="card mb-4">
-    <div class="card-header bg-white py-3">
-        <h5 class="fw-bold mb-0">OWASP Compliance Breakdown</h5>
+<div class="card mb-4 border-glow shadow-lg">
+    <div class="card-header">
+        <h5 class="fw-bold mb-0 text-white">OWASP Compliance Breakdown</h5>
     </div>
-    <div class="card-body">
-        <div class="row">
+    <div class="card-body p-4">
+        <div class="row g-3">
             {% for cat in compliance_breakdown %}
-            <div class="col-md-6 mb-3">
-                <div class="p-3 bg-light rounded border">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-semibold text-dark small">{{ cat.category }}</span>
-                        <span class="badge bg-{{ score_to_color(cat.percentage) }} rounded-pill">{{ cat.passed_count }}/{{ cat.total_count }} ({{ cat.percentage }}%)</span>
+            <div class="col-md-6">
+                <div class="compliance-box">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-semibold text-white small">{{ cat.category }}</span>
+                        <span class="badge bg-{{ score_to_color(cat.percentage) }}">{{ cat.passed_count }}/{{ cat.total_count }} Passed ({{ cat.percentage }}%)</span>
                     </div>
-                    <div class="progress" style="height: 6px;">
+                    <div class="progress" style="height: 8px;">
                         <div class="progress-bar bg-{{ score_to_color(cat.percentage) }}" role="progressbar"
                              style="width: {{ cat.percentage }}%;"
                              aria-valuenow="{{ cat.percentage }}" aria-valuemin="0" aria-valuemax="100">
@@ -85,10 +90,10 @@
 {% for severity in severity_order %}
     {% set findings = findings_by_severity[severity] %}
     {% if findings %}
-    <div class="mb-4">
+    <div class="mb-5">
         <div class="d-flex align-items-center mb-3">
-            <h4 class="fw-bold text-capitalize mb-0 me-2">{{ severity.value }} Findings</h4>
-            <span class="badge bg-secondary rounded-pill">{{ findings|length }}</span>
+            <h4 class="fw-bold text-capitalize mb-0 text-white me-3">{{ severity.value }} Findings</h4>
+            <span class="badge bg-{{ severity.value }}">{{ findings|length }} check{{ "s" if findings|length != 1 else "" }}</span>
         </div>
         {{ m.limited_list(findings, 5, 'findings-'~severity.value, m.render_finding) }}
     </div>

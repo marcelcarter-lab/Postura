@@ -3,10 +3,14 @@
 {% block title %}Scan Comparison - Postura{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ url_for('website.scan_history', website_id=website.id) }}" class="text-secondary hover-text-primary text-decoration-none">&larr; Back to History</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
     <div>
-        <h2 class="fw-bold mb-1">Scan Comparison — {{ website.display_name }}</h2>
-        <p class="text-muted mb-0">
+        <h2 class="fw-bold mb-1">Scan Comparison</h2>
+        <p class="font-monospace text-secondary mb-0">
             {{ older_scan.started_at.strftime('%Y-%m-%d %H:%M') }}
             &rarr;
             {{ newer_scan.started_at.strftime('%Y-%m-%d %H:%M') }}
@@ -14,103 +18,103 @@
     </div>
 </div>
 
-<div class="card mb-4">
+<div class="card mb-5 border-glow shadow-lg">
     <div class="card-body p-4">
         <div class="d-flex align-items-center gap-3 flex-wrap">
-            <span class="badge rounded-pill bg-secondary px-3 py-2 fs-5">{{ older_score }} / 100</span>
-            <span class="fs-4 text-muted">&rarr;</span>
-            <span class="badge rounded-pill bg-primary px-3 py-2 fs-5">{{ newer_score }} / 100</span>
+            <span class="badge bg-secondary px-3 py-2 fs-5 shadow">{{ older_score }} / 100</span>
+            <span class="fs-4 text-secondary">&rarr;</span>
+            <span class="badge bg-primary px-3 py-2 fs-5 shadow">{{ newer_score }} / 100</span>
             {% if score_delta > 0 %}
-                <span class="badge bg-success rounded-pill fs-6 px-3">▲ +{{ score_delta }}</span>
+                <span class="badge bg-success fs-6 px-3 py-2 shadow">▲ +{{ score_delta }} Improvement</span>
             {% elif score_delta < 0 %}
-                <span class="badge bg-danger rounded-pill fs-6 px-3">▼ {{ score_delta }}</span>
+                <span class="badge bg-danger fs-6 px-3 py-2 shadow">▼ {{ score_delta }} Regression</span>
             {% else %}
-                <span class="badge bg-secondary rounded-pill fs-6 px-3">No change</span>
+                <span class="badge bg-secondary fs-6 px-3 py-2">No score change</span>
             {% endif %}
         </div>
     </div>
 </div>
 
-<div class="row mb-4 g-3">
+<div class="row mb-5 g-4">
     <div class="col-md-4">
         <div class="card text-center border-danger">
             <div class="card-body py-4">
-                <h3 class="card-title text-danger fw-bold mb-1">{{ diff.new|length }}</h3>
-                <p class="card-text text-muted mb-0">New issue{{ "s" if diff.new|length != 1 else "" }}</p>
+                <h3 class="card-title text-danger fw-bold mb-1 fs-1">{{ diff.new|length }}</h3>
+                <p class="card-text text-secondary mb-0">New Issue{{ "s" if diff.new|length != 1 else "" }} Identified</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card text-center border-success">
             <div class="card-body py-4">
-                <h3 class="card-title text-success fw-bold mb-1">{{ diff.resolved|length }}</h3>
-                <p class="card-text text-muted mb-0">Resolved issue{{ "s" if diff.resolved|length != 1 else "" }}</p>
+                <h3 class="card-title text-success fw-bold mb-1 fs-1">{{ diff.resolved|length }}</h3>
+                <p class="card-text text-secondary mb-0">Issue{{ "s" if diff.resolved|length != 1 else "" }} Resolved</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card text-center">
+        <div class="card text-center border-glow">
             <div class="card-body py-4">
-                <h3 class="card-title text-muted fw-bold mb-1">{{ diff.unchanged|length }}</h3>
-                <p class="card-text text-muted mb-0">Unchanged</p>
+                <h3 class="card-title text-light fw-bold mb-1 fs-1">{{ diff.unchanged|length }}</h3>
+                <p class="card-text text-secondary mb-0">Unchanged Check{{ "s" if diff.unchanged|length != 1 else "" }}</p>
             </div>
         </div>
     </div>
 </div>
 
 {% macro finding_card(finding, border_class) %}
-<div class="card mb-3 border-{{ border_class }}">
-    <div class="card-body">
-        <div class="d-flex align-items-start gap-2">
-            <span class="badge bg-secondary text-uppercase rounded-pill small">{{ finding.severity }}</span>
-            <div>
-                <strong class="d-block text-dark">{{ finding.title }}</strong>
-                <p class="card-text text-secondary small mb-0 mt-1">{{ finding.description }}</p>
+<div class="card mb-3 border-glow border-start border-4 border-{{ border_class }}">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3 flex-wrap flex-sm-nowrap">
+            <span class="badge bg-{{ finding.severity }} text-uppercase fs-8">{{ finding.severity }}</span>
+            <div class="flex-grow-1">
+                <strong class="d-block text-white fs-5 mb-2">{{ finding.title }}</strong>
+                <p class="card-text text-secondary small mb-0">{{ finding.description }}</p>
             </div>
         </div>
     </div>
 </div>
 {% endmacro %}
 
-<div class="mb-4">
-    <div class="d-flex align-items-center mb-3">
-        <h4 class="fw-bold text-danger mb-0 me-2">🔴 New Issues</h4>
-        <span class="badge bg-danger rounded-pill">{{ diff.new|length }}</span>
+<div class="mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <h4 class="fw-bold text-danger mb-0 me-3">🔴 New Issues</h4>
+        <span class="badge bg-danger">{{ diff.new|length }}</span>
     </div>
     {% if diff.new %}
         {% for finding in diff.new %}
             {{ finding_card(finding, "danger") }}
         {% endfor %}
     {% else %}
-        <p class="text-muted">No new issues since the previous scan.</p>
+        <p class="text-secondary">No new security issues identified in the newer scan.</p>
     {% endif %}
 </div>
 
-<div class="mb-4">
-    <div class="d-flex align-items-center mb-3">
-        <h4 class="fw-bold text-success mb-0 me-2">🟢 Resolved Issues</h4>
-        <span class="badge bg-success rounded-pill">{{ diff.resolved|length }}</span>
+<div class="mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <h4 class="fw-bold text-success mb-0 me-3">🟢 Resolved Issues</h4>
+        <span class="badge bg-success">{{ diff.resolved|length }}</span>
     </div>
     {% if diff.resolved %}
         {% for finding in diff.resolved %}
             {{ finding_card(finding, "success") }}
         {% endfor %}
     {% else %}
-        <p class="text-muted">No issues were resolved since the previous scan.</p>
+        <p class="text-secondary">No security issues were resolved since the previous scan.</p>
     {% endif %}
 </div>
 
-<div class="mb-4">
-    <div class="d-flex align-items-center mb-3">
-        <h4 class="fw-bold text-muted mb-0 me-2">⚪ Unchanged</h4>
-        <span class="badge bg-secondary rounded-pill">{{ diff.unchanged|length }}</span>
+<div class="mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <h4 class="fw-bold text-secondary mb-0 me-3">⚪ Unchanged Checks</h4>
+        <span class="badge bg-secondary">{{ diff.unchanged|length }}</span>
     </div>
     {% if diff.unchanged %}
         {% for finding in diff.unchanged %}
             {{ finding_card(finding, "secondary") }}
         {% endfor %}
     {% else %}
-        <p class="text-muted">Nothing unchanged — every finding shifted between scans.</p>
+        <p class="text-secondary">Every check status shifted between these scans.</p>
     {% endif %}
 </div>
 {% endblock %}

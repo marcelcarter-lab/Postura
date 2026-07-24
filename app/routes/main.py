@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, current_user
 
 from app.models.project import Project
@@ -7,6 +7,11 @@ from app.models.scan import Scan
 from app.services.risk_scoring import calculate_risk_score, score_to_color
 
 main_bp = Blueprint("main", __name__)
+
+
+@main_bp.route("/")
+def index():
+    return redirect(url_for("main.dashboard"))
 
 
 @main_bp.route("/dashboard")

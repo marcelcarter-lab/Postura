@@ -3,22 +3,96 @@
 {% block title %}Dashboard - Postura{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1">Your Websites</h2>
-        <p class="text-muted mb-0">Monitor and manage security posture scans across your target sites</p>
+
+<!-- Internship Project Banner -->
+<div class="card mb-5 border-glow shadow-lg welcome-banner position-relative overflow-hidden">
+    <div class="card-body p-4 p-md-5">
+        <div class="row align-items-center position-relative z-1">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-2 mb-2 text-primary font-monospace">
+                    <span class="badge bg-primary px-3 py-1 fs-8 text-uppercase">Project Overview</span>
+                </div>
+                <h1 class="display-6 fw-bold mb-3 text-white">Postura Security Console</h1>
+                <p class="text-secondary mb-0" style="font-size: 1.05rem; line-height: 1.6;">
+                    A self-hosted web security posture scanner built solo during a ~6-week internship. 
+                    Powered by Flask, PostgreSQL, SQLAlchemy, WeasyPrint, and APScheduler, Postura runs 
+                    automated recurring scans to analyze target sites for OWASP vulnerabilities and compliance checks.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <a href="{{ url_for('website.add_website') }}" class="btn btn-primary px-4 py-2.5 shadow-lg">+ Add Target Website</a>
+            </div>
+        </div>
+        <div class="banner-gradient-bg"></div>
     </div>
-    <a href="{{ url_for('website.add_website') }}" class="btn btn-primary shadow-sm">+ Add Website</a>
 </div>
 
+{% set scanned_rows = website_rows | selectattr('score', 'ne', none) | list %}
+{% if scanned_rows %}
+    {% set sum_score = namespace(value=0) %}
+    {% for row in scanned_rows %}
+      {% set sum_score.value = sum_score.value + row.score %}
+    {% endfor %}
+    {% set avg_score = (sum_score.value / scanned_rows|length) | round | int %}
+{% else %}
+    {% set avg_score = "N/A" %}
+{% endif %}
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card border-glow shadow-sm h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small d-block mb-1 fw-semibold tracking-wider">MONITORED TARGETS</span>
+                    <h3 class="fw-bold mb-0 text-white">{{ website_rows|length }}</h3>
+                </div>
+                <div class="fs-1 opacity-75">🌐</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-glow shadow-sm h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small d-block mb-1 fw-semibold tracking-wider">AVERAGE SECURITY SCORE</span>
+                    <h3 class="fw-bold mb-0 text-white">
+                        {% if avg_score != "N/A" %}
+                            <span class="badge bg-{{ score_to_color(avg_score) }} px-3 py-1.5 fs-5">{{ avg_score }} / 100</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-1.5 fs-5">N/A</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="fs-1 opacity-75">📈</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-glow shadow-sm h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small d-block mb-1 fw-semibold tracking-wider">COMPLETED ASSESSMENTS</span>
+                    <h3 class="fw-bold mb-0 text-white">
+                        {{ scanned_rows|length }} <span class="fs-5 text-secondary">/ {{ website_rows|length }}</span>
+                    </h3>
+                </div>
+                <div class="fs-1 opacity-75">🛡️</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="fw-bold mb-4 text-white">Target Assessment Inventory</h4>
+
 {% if website_rows %}
-<div class="card overflow-hidden">
+<div class="card overflow-hidden border-glow">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Name / URL</th>
-                    <th>Latest Score</th>
+                    <th class="ps-4">Target Website</th>
+                    <th>Latest Security Score</th>
                     <th>Last Scanned</th>
                     <th class="text-end pe-4">Actions</th>
                 </tr>
@@ -26,34 +100,32 @@
             <tbody>
                 {% for row in website_rows %}
                 <tr>
-                    <td>
-                        <strong class="d-block text-dark">{{ row.website.display_name }}</strong>
-                        {% if row.website.name %}
-                            <small class="text-muted">{{ row.website.url }}</small>
-                        {% endif %}
+                    <td class="ps-4 py-4">
+                        <strong class="d-block text-white fs-5 mb-1">{{ row.website.display_name }}</strong>
+                        <span class="font-monospace text-secondary small opacity-75">{{ row.website.url }}</span>
                     </td>
-                    <td>
+                    <td class="py-4">
                         {% if row.score is not none %}
-                            <span class="badge rounded-pill bg-{{ row.score_color }} px-3 py-2 fs-6">{{ row.score }} / 100</span>
+                            <span class="badge bg-{{ row.score_color }} px-3 py-2 fs-6">{{ row.score }} / 100</span>
                         {% else %}
-                            <span class="badge rounded-pill bg-light text-secondary border">Not scanned yet</span>
+                            <span class="badge bg-secondary px-3 py-2 fs-6">Not Scanned Yet</span>
                         {% endif %}
                     </td>
-                    <td class="text-muted small">
+                    <td class="text-secondary py-4 small">
                         {% if row.latest_scan %}
-                            {{ row.latest_scan.started_at.strftime('%Y-%m-%d %H:%M') }}
+                            <span class="text-light">{{ row.latest_scan.started_at.strftime('%Y-%m-%d %H:%M') }}</span>
                         {% else %}
-                            <span>—</span>
+                            <span class="opacity-50">—</span>
                         {% endif %}
                     </td>
-                    <td class="text-end pe-4">
-                        <div class="btn-group btn-group-sm">
-                            <form method="post" action="{{ url_for('website.trigger_scan_ui', website_id=row.website.id) }}" class="d-inline loading-on-submit me-1">
+                    <td class="text-end pe-4 py-4">
+                        <div class="d-inline-flex gap-2">
+                            <form method="post" action="{{ url_for('website.trigger_scan_ui', website_id=row.website.id) }}" class="d-inline loading-on-submit">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-primary">Scan Now</button>
+                                <button type="submit" class="btn btn-primary btn-sm px-3">Scan Now</button>
                             </form>
-                            <a href="{{ url_for('website.scan_history', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">History</a>
-                            <a href="{{ url_for('website.edit_website', website_id=row.website.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a href="{{ url_for('website.scan_history', website_id=row.website.id) }}" class="btn btn-outline-secondary btn-sm px-3">History</a>
+                            <a href="{{ url_for('website.edit_website', website_id=row.website.id) }}" class="btn btn-outline-secondary btn-sm px-3">Configure</a>
                         </div>
                     </td>
                 </tr>
@@ -63,12 +135,16 @@
     </div>
 </div>
 {% else %}
-<div class="card text-center p-5">
-    <div class="card-body">
-        <div class="mb-3 fs-1">🌐</div>
-        <h4 class="fw-bold">No websites monitored yet</h4>
-        <p class="text-muted">You haven't added any websites to your dashboard. Add your first site to run automated security posture scans.</p>
-        <a href="{{ url_for('website.add_website') }}" class="btn btn-primary">Add Your First Website</a>
+<div class="card text-center p-5 border-glow">
+    <div class="card-body py-5">
+        <div class="mb-4">
+            <span class="fs-1 d-inline-block p-4 rounded-circle bg-dark border-glow shadow-sm">🌐</span>
+        </div>
+        <h4 class="fw-bold mb-3">No websites monitored yet</h4>
+        <p class="text-secondary mx-auto mb-4" style="max-width: 500px;">
+            You haven't added any target websites to your console. Add your first site to execute automated vulnerability scans and monitor security compliance.
+        </p>
+        <a href="{{ url_for('website.add_website') }}" class="btn btn-primary btn-lg px-4 shadow">Add Your First Website</a>
     </div>
 </div>
 {% endif %}

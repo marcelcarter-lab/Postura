@@ -4,17 +4,17 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-lg-8">
         <h2 class="fw-bold mb-4">Account Settings</h2>
 
-        <div class="card mb-4">
-            <div class="card-header bg-white py-3">
-                <h5 class="fw-bold mb-0">Profile Information</h5>
+        <div class="card mb-4 border-glow shadow-lg">
+            <div class="card-header">
+                <h5 class="fw-bold mb-0 text-white">Profile Information</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="row align-items-center">
-                    <div class="col-sm-3 text-muted">Email address</div>
-                    <div class="col-sm-9 font-monospace">{{ current_user.email }}</div>
+                    <div class="col-sm-3 text-secondary">Email address</div>
+                    <div class="col-sm-9 font-monospace text-white">{{ current_user.email }}</div>
                 </div>
             </div>
         </div>
@@ -22,25 +22,25 @@
         <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <div class="card mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold mb-0">Notifications</h5>
+            <div class="card mb-4 border-glow shadow-lg">
+                <div class="card-header">
+                    <h5 class="fw-bold mb-0 text-white">Notifications</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <div class="form-check form-switch py-2">
                         <input type="checkbox" class="form-check-input" id="notify_on_critical_findings" name="notify_on_critical_findings"
                                {% if current_user.notify_on_critical_findings %}checked{% endif %}>
-                        <label class="form-check-label fw-medium ms-2" for="notify_on_critical_findings">
+                        <label class="form-check-label text-secondary ms-2" for="notify_on_critical_findings">
                             Email me when a scan detects new critical security issues
                         </label>
                     </div>
-                    <div class="form-text mt-2 text-muted">
+                    <div class="form-text text-secondary mt-2">
                         Notifications are sent automatically when a newly executed posture scan uncovers critical severity findings that were not present in previous baseline scans.
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary px-4">Save Settings</button>
+            <button type="submit" class="btn btn-primary px-4 shadow">Save Settings</button>
         </form>
     </div>
 </div>

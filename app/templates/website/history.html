@@ -3,20 +3,20 @@
 {% block title %}Scan History - Postura{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
     <div>
-        <h2 class="fw-bold mb-1">Scan History — {{ website.display_name }}</h2>
-        <p class="text-muted mb-0"><code>{{ website.url }}</code></p>
+        <h2 class="fw-bold mb-1">Scan History</h2>
+        <p class="font-monospace text-secondary mb-0">{{ website.display_name }} ({{ website.url }})</p>
     </div>
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Dashboard</a>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm px-3">&larr; Back to Dashboard</a>
 </div>
 
 {% if trend_chart_data.labels|length >= 2 %}
-<div class="card mb-4">
-    <div class="card-header bg-white py-3">
-        <h5 class="fw-bold mb-0">Security Score Trend</h5>
+<div class="card mb-5 border-glow shadow-lg">
+    <div class="card-header">
+        <h5 class="fw-bold mb-0 text-white">Security Score Trend</h5>
     </div>
-    <div class="card-body">
+    <div class="card-body p-4">
         <canvas id="trendChart" height="80"></canvas>
     </div>
 </div>
@@ -30,24 +30,36 @@
                 datasets: [{
                     label: 'Security Score',
                     data: {{ trend_chart_data.scores | tojson }},
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
                     fill: true,
-                    tension: 0.25,
-                    borderWidth: 2,
-                    pointBackgroundColor: '#2563eb'
+                    tension: 0.3,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#818cf8',
+                    pointBorderColor: '#ffffff',
+                    pointHoverBackgroundColor: '#ffffff',
+                    pointHoverBorderColor: '#6366f1',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         max: 100,
-                        grid: { color: '#f1f5f9' }
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8', font: { family: 'Inter' } }
                     },
                     x: {
-                        grid: { display: false }
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { family: 'Inter' } }
                     }
                 }
             }
@@ -55,19 +67,22 @@
     });
 </script>
 {% elif trend_chart_data.labels|length == 1 %}
-<div class="alert alert-info shadow-sm mb-4">
-    ℹ️ Only one completed scan recorded so far. A trend chart requires at least two scans to display line progress.
+<div class="alert alert-info shadow mb-5">
+    <div class="d-flex align-items-center gap-2">
+        <span>ℹ️</span>
+        <div>Only one completed scan recorded so far. A trend chart requires at least two scans to display line progress.</div>
+    </div>
 </div>
 {% endif %}
 
 {% if scan_rows %}
 <form method="get" action="{{ url_for('scan_view.compare_scans') }}">
-    <div class="card overflow-hidden mb-3">
+    <div class="card overflow-hidden border-glow shadow-lg mb-4">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">Select</th>
+                        <th style="width: 60px;" class="text-center">Select</th>
                         <th>Scan Date</th>
                         <th>Status</th>
                         <th>Score & Trend</th>
@@ -82,27 +97,27 @@
                             <input type="checkbox" name="scan_id" value="{{ row.scan.id }}" class="form-check-input">
                             {% endif %}
                         </td>
-                        <td class="fw-medium">{{ row.scan.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="fw-medium text-white">{{ row.scan.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td>
-                            <span class="badge bg-secondary text-capitalize rounded-pill">{{ row.scan.status }}</span>
+                            <span class="badge bg-secondary text-capitalize">{{ row.scan.status }}</span>
                         </td>
                         <td>
                             {% if row.score is not none %}
-                                <span class="badge rounded-pill bg-{{ row.score_color }} px-3 py-1 me-2 fs-6">{{ row.score }} / 100</span>
+                                <span class="badge bg-{{ row.score_color }} px-3 py-1.5 me-3 fs-7">{{ row.score }} / 100</span>
                                 {% if row.trend == "up" %}
-                                    <span class="text-success fw-bold" title="Improved since previous scan">▲ Improved</span>
+                                    <span class="text-success fw-semibold small" title="Improved since previous scan">▲ Improved</span>
                                 {% elif row.trend == "down" %}
-                                    <span class="text-danger fw-bold" title="Declined since previous scan">▼ Declined</span>
+                                    <span class="text-danger fw-semibold small" title="Declined since previous scan">▼ Declined</span>
                                 {% elif row.trend == "flat" %}
-                                    <span class="text-muted" title="No change since previous scan">— Flat</span>
+                                    <span class="text-secondary small" title="No change since previous scan">— Flat</span>
                                 {% endif %}
                             {% else %}
-                                <span class="text-muted">—</span>
+                                <span class="text-secondary">—</span>
                             {% endif %}
                         </td>
                         <td class="text-end pe-4">
                             {% if row.scan.status == "completed" %}
-                                <a href="{{ url_for('scan_view.scan_detail', scan_id=row.scan.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                                <a href="{{ url_for('scan_view.scan_detail', scan_id=row.scan.id) }}" class="btn btn-sm btn-outline-primary px-3">View Details</a>
                             {% endif %}
                         </td>
                     </tr>
@@ -111,18 +126,18 @@
             </table>
         </div>
     </div>
-    <div class="d-flex align-items-center justify-content-between">
-        <button type="submit" class="btn btn-primary" id="compare-button" disabled>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <button type="submit" class="btn btn-primary px-4 shadow" id="compare-button" disabled>
             Compare Selected Scans
         </button>
-        <span class="form-text text-muted mb-0">Select exactly two scans to compare diff details.</span>
+        <span class="form-text text-secondary mb-0">Select exactly two scans to compare diff details.</span>
     </div>
 </form>
 {% else %}
-<div class="card text-center p-5">
-    <div class="card-body">
-        <h5 class="fw-bold">No scan history recorded</h5>
-        <p class="text-muted">This website has not been scanned yet.</p>
+<div class="card text-center p-5 border-glow">
+    <div class="card-body py-5">
+        <h5 class="fw-bold mb-2">No scan history recorded</h5>
+        <p class="text-secondary mb-0">This website has not been scanned yet.</p>
     </div>
 </div>
 {% endif %}
